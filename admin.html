@@ -38,9 +38,9 @@ async function adminCheck(){const {data:{session}}=await supabase.auth.getSessio
   await supabase.auth.refreshSession();const {data:{user:refreshed}}=await supabase.auth.getUser();user=refreshed;
  }
  if(user.app_metadata?.role!=='admin'){await supabase.auth.signOut();showAuth();msg('authmsg','এই ইমেইলের অ্যাডমিন অনুমতি নেই।',true);return}
- $('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
+ $('preview').classList.add('hidden');$('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
 }
-function showAuth(){$('preview').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
+function showAuth(){$('preview').classList.remove('hidden');$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
 $('login').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){msg('authmsg',error.message,true);return}await adminCheck()};
 $('resend').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','নির্ধারিত অ্যাডমিন ইমেইল লিখুন।',true);return}const {error}=await supabase.auth.resend({type:'signup',email,options:{emailRedirectTo:window.location.href}});if(error){msg('authmsg','ইমেইল পাঠানো যায়নি: '+error.message,true);return}msg('authmsg','যাচাইকরণ ইমেইল আবার পাঠানো হয়েছে। Gmail-এর Inbox ও Spam ফোল্ডার দেখুন।')};
 $('signup').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','প্রথম অ্যাডমিনের নির্ধারিত ইমেইল ব্যবহার করুন।',true);return}const password=$('password').value;if(password.length<8){msg('authmsg','কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।',true);return}const {data,error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:window.location.href,data:{display_name:'AdView BD Admin'}}});if(error){msg('authmsg',error.message,true);return}if(data.session){await adminCheck()}else msg('authmsg','ইমেইলে Supabase-এর confirmation link পাঠানো হয়েছে। ইমেইল যাচাই করে আবার লগইন করুন।')};
@@ -69,24 +69,24 @@ if(error){msg('appmsg','পরিবর্তন ব্যর্থ: '+error.mes
 async function overview(){$('content').innerHTML='<h2>সিস্টেম সারাংশ</h2><p class="muted">বাস্তব ডেটাবেস রেকর্ডের ভিত্তিতে হিসাব।</p><div class="status">শুধু যাচাইকৃত বিজ্ঞাপন ভিউ সম্পন্ন হলে আয় গণনা হবে। এই প্যানেল থেকে কোনো ভুয়া ব্যালেন্স বা পেমেন্ট তৈরি করা হয় না।</div><div class="row" style="margin-top:12px"><button class="btn alt" id="refresh">রিফ্রেশ</button></div>'; $('refresh').onclick=async()=>{await loadStats();await overview()}}
 
 const previewDescriptions={
- overview:['সারাংশ','ব্যবহারকারী, বিজ্ঞাপনদাতা, ক্যাম্পেইন, বিজ্ঞাপন ও উত্তোলনের সারাংশ এখানে দেখানোর জন্য নির্ধারিত।'],
- companies:['বিজ্ঞাপনদাতা','বিজ্ঞাপনদাতার আবেদন ও যাচাইয়ের বিভাগ।'],
- campaigns:['ক্যাম্পেইন','বিজ্ঞাপন প্রচারণা, বাজেট ও ক্যাম্পেইনের অবস্থা ব্যবস্থাপনার বিভাগ।'],
- ads:['বিজ্ঞাপন','প্রকাশিত বিজ্ঞাপন ও বিজ্ঞাপনের অবস্থা ব্যবস্থাপনার বিভাগ।'],
- profiles:['ব্যবহারকারী','প্ল্যাটফর্মের ব্যবহারকারী অ্যাকাউন্টের তালিকার বিভাগ।'],
- withdrawal_requests:['উত্তোলন','ব্যবহারকারীদের টাকা উত্তোলনের অনুরোধ পর্যালোচনার বিভাগ।'],
- ad_events:['ভিউ যাচাই','বিজ্ঞাপন দেখা ও ভিউ যাচাইয়ের রেকর্ডের বিভাগ।'],
- campaign_daily_reports:['রিপোর্ট','ক্যাম্পেইনের দৈনিক পরিসংখ্যান ও রিপোর্টের বিভাগ।'],
- admin_audit_logs:['অডিট লগ','অ্যাডমিনের কার্যক্রমের হিসাব রাখার বিভাগ।']
+ overview:['সারাংশ','মোট ব্যবহারকারী, বিজ্ঞাপনদাতা, ক্যাম্পেইন, বিজ্ঞাপন ও উত্তোলনের সংখ্যা; সর্বশেষ কার্যক্রম এবং সিস্টেমের অবস্থা।'],
+ companies:['বিজ্ঞাপনদাতা','নতুন প্রতিষ্ঠানের আবেদন দেখা, পরিচয়/যোগাযোগের তথ্য যাচাই, অনুমোদন, বাতিল বা স্থগিত করা।'],
+ campaigns:['ক্যাম্পেইন','ক্যাম্পেইনের শিরোনাম, বাজেট, নির্ধারিত ভিউ ও অবস্থা দেখা; অনুমোদন, চালু, বিরতি বা বাতিল করা।'],
+ ads:['বিজ্ঞাপন','বিজ্ঞাপনের শিরোনাম, ক্যাম্পেইন, সময়সীমা ও মিডিয়া লিংক দেখা; বিজ্ঞাপন চালু বা বন্ধ করা।'],
+ profiles:['ব্যবহারকারী','ব্যবহারকারীর আইডি, নাম, অ্যাকাউন্টের ধরন ও নিবন্ধনের সময় দেখা।'],
+ withdrawal_requests:['উত্তোলন','উত্তোলনের পরিমাণ, পদ্ধতি, পেআউট অ্যাকাউন্ট ও অনুরোধের অবস্থা দেখা; প্রক্রিয়াধীন, পরিশোধিত বা প্রত্যাখ্যান করা।'],
+ ad_events:['ভিউ যাচাই','কোন ব্যবহারকারী কোন বিজ্ঞাপন কতক্ষণ দেখেছেন, ইভেন্টের ধরন ও যাচাইয়ের অবস্থা দেখা।'],
+ campaign_daily_reports:['রিপোর্ট','প্রতিদিনের শুরু, সম্পন্ন, যাচাইকৃত ও সন্দেহজনক ভিউয়ের হিসাব দেখা।'],
+ admin_audit_logs:['অডিট লগ','কোন অ্যাডমিন কখন কোন টেবিল বা রেকর্ডে কী কাজ করেছেন, তার অডিট ইতিহাস দেখা।']
 };
 $('preview-nav').innerHTML=tabs.map(([id,label],i)=>'<button type="button" data-preview="'+id+'"><span style="display:inline-block;min-width:34px;font-variant-numeric:tabular-nums">'+String(i+1).padStart(2,'0')+'.</span> '+label+'</button>').join('');
 $('preview-nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{
  const [title,desc]=previewDescriptions[b.dataset.preview];
  $('preview-nav').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
- $('preview-content').innerHTML='<h2>'+title+'</h2><p>'+desc+'</p><div class="status">প্রিভিউ মোডে আসল রেকর্ড ও পরিবর্তনের সুবিধা বন্ধ।</div>';
+ $('preview-content').innerHTML='<h2>'+title+'</h2><p>'+desc+'</p><div class="status">এখানে প্রতিটি মেনুর কাজ ও কী কী তথ্য থাকবে তা দেখানো হচ্ছে। আসল রেকর্ড দেখা ও পরিবর্তনের জন্য নিচে অ্যাডমিন যাচাই করে প্রবেশ করুন।</div>';
 });
 $('preview-nav').querySelector('[data-preview="overview"]').click();
-$('preview').classList.add('hidden');
+$('preview').classList.remove('hidden');
 $('maintenance').classList.add('hidden');
 $('auth').classList.remove('hidden');
 $('app').classList.add('hidden');

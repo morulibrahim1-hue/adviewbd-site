@@ -1,158 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AdView BD</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    .hidden { display: none; }
-    input, button { display: block; margin: 10px 0; width: 100%; padding: 8px; }
-    .section { margin-top: 30px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#075e50">
+<meta name="description" content="AdView BD — বিজ্ঞাপনদাতা ও দর্শকের জন্য স্বচ্ছ বিজ্ঞাপন প্ল্যাটফর্ম।">
+<title>AdView BD</title>
+<style>
+:root{--green:#087565;--deep:#064c43;--ink:#152923;--muted:#64756f;--line:#dce8e3;--bg:#f3f8f5;--white:#fff;--gold:#e9ad36;--red:#a83232}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Bengali",Arial,sans-serif;line-height:1.55}button,input{font:inherit}button{cursor:pointer}.top{background:linear-gradient(120deg,var(--deep),var(--green));color:white;padding:15px 18px}.topin{max-width:1080px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:22px;font-weight:850;letter-spacing:.2px}.brand small{display:block;font-size:11px;font-weight:500;opacity:.85}.lang{border:1px solid #ffffff80;color:white;background:#ffffff18;border-radius:10px;padding:8px 12px}.wrap{max-width:1080px;margin:24px auto;padding:0 16px}.hero{background:white;border:1px solid var(--line);border-radius:22px;padding:28px;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;box-shadow:0 8px 28px #153f3010}.eyebrow{color:var(--green);font-weight:800;font-size:13px}.hero h1{font-size:clamp(27px,5vw,42px);line-height:1.18;margin:10px 0}.hero p{color:var(--muted);max-width:600px}.heroart{background:linear-gradient(145deg,#e0f3e9,#f5f8df);border-radius:18px;display:grid;place-items:center;min-height:180px;color:var(--green);font-size:68px}.notice{margin-top:16px;background:#fff8e8;border:1px solid #f0dfb5;border-radius:14px;padding:13px 15px;color:#694b15;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 20px #153f3008}.panel h2{font-size:20px;margin:0 0 5px}.sub{color:var(--muted);font-size:13px;margin:0 0 15px}.field{margin:12px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}.field input{width:100%;padding:12px 13px;border:1px solid #ccdcd4;border-radius:11px;background:#fbfdfc;outline:none}.field input:focus{border-color:var(--green);box-shadow:0 0 0 3px #08756518}.btn{width:100%;border:0;border-radius:11px;padding:12px 14px;background:var(--green);color:white;font-weight:750}.btn:disabled{opacity:.6;cursor:wait}.btn.secondary{background:#e9f3ee;color:var(--deep);border:1px solid var(--line)}.status{display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px;overflow-wrap:anywhere}.status.show{display:block}.status.error{background:#fff0ef;color:var(--red)}.status.ok{background:#eaf7ef;color:#17633c}.hidden{display:none!important}.dash{margin-top:18px}.dashhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.dashbox{background:#f7faf8;border:1px dashed #b8cec2;border-radius:14px;padding:16px;margin-top:12px}.dashbox strong{display:block}.foot{text-align:center;color:var(--muted);font-size:12px;padding:26px 12px}.foot a{color:var(--green)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ffffff70;border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:720px){.hero{grid-template-columns:1fr;padding:21px}.heroart{min-height:110px;font-size:48px}.grid{grid-template-columns:1fr}.wrap{margin:16px auto;padding:0 12px}.topin{padding:0 2px}.brand{font-size:20px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
-
-  <h1>AdView BD</h1>
-
-  <!-- Register Section -->
-  <div id="register-section" class="section">
-    <h2>Register</h2>
-    <input type="text" id="reg-name" placeholder="Your Name" />
-    <input type="email" id="reg-email" placeholder="Email" />
-    <input type="password" id="reg-password" placeholder="Password" />
-    <button onclick="sendVerification()">Send Verification Code</button>
-    <div id="code-section" class="hidden">
-      <input type="text" id="verification-code" placeholder="Enter Code" />
-      <button onclick="verifyAndRegister()">Verify & Register</button>
-    </div>
-  </div>
-
-  <!-- Login Section -->
-  <div id="login-section" class="section">
-    <h2>Login</h2>
-    <input type="email" id="login-email" placeholder="Email" />
-    <input type="password" id="login-password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboard" class="hidden">
-    <h2>Welcome, <span id="username"></span>!</h2>
-    <p>Your referral link:</p>
-    <input id="ref-link" readonly />
-    <button onclick="copyReferral()">Copy Referral Link</button>
-    <p>Total referrals: <span id="referrals">3</span></p>
-    <p>Total earnings: ৳<span id="earnings">12</span></p>
-    <button onclick="alert('Ad watched! +৳1')">📺 Watch Ad to Earn</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-
-  <script>
-    const api = 'https://adviewbd-backend.onrender.com';
-    let tempEmail = '', tempName = '', tempPass = '';
-
-    function sendVerification() {
-      const email = document.getElementById('reg-email').value;
-      if (!email) return alert('Email required');
-
-      fetch(api + '/send-verification-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert('Code sent! Check your email.');
-          document.getElementById('code-section').classList.remove('hidden');
-          tempEmail = email;
-          tempName = document.getElementById('reg-name').value;
-          tempPass = document.getElementById('reg-password').value;
-        } else {
-          alert(data.message || 'Error sending code');
-        }
-      });
-    }
-
-    function verifyAndRegister() {
-      const code = document.getElementById('verification-code').value;
-
-      fetch(api + '/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: tempEmail, code })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          registerUser();
-        } else {
-          alert('Invalid verification code');
-        }
-      });
-    }
-
-    function registerUser() {
-      fetch(api + '/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tempName, email: tempEmail, password: tempPass })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message);
-      });
-    }
-
-    function login() {
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-
-      fetch(api + '/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.message === 'Login successful') {
-          localStorage.setItem('user', JSON.stringify({ name: data.name, email }));
-          showDashboard(data.name, email);
-        } else {
-          alert(data.message);
-        }
-      });
-    }
-
-    function showDashboard(name, email) {
-      document.getElementById('register-section').classList.add('hidden');
-      document.getElementById('login-section').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
-      document.getElementById('username').innerText = name;
-      document.getElementById('ref-link').value = `https://adviewbd.com/ref/${btoa(email)}`;
-    }
-
-    function logout() {
-      localStorage.removeItem('user');
-      location.reload();
-    }
-
-    function copyReferral() {
-      const input = document.getElementById('ref-link');
-      input.select();
-      document.execCommand('copy');
-      alert('Referral link copied!');
-    }
-
-    // Auto-login if data in localStorage
-    window.onload = () => {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user) {
-        showDashboard(user.name, user.email);
-      }
-    };
-  </script>
-
-</body>
-</html>
+<header class="top"><div class="topin"><div class="brand">AdView BD<small>স্বচ্ছ বিজ্ঞাপন • বিশ্বাসযোগ্য অভিজ্ঞতা</small></div><button class="lang" id="langBtn" type="button">English</button></div></header>
+<main class="wrap">
+<section class="hero"><div><div class="eyebrow">বাংলাদেশের জন্য বিজ্ঞাপন প্ল্যাটফর্ম</div><h1>বিজ্ঞাপন দেখুন, প্রচার করুন—স্বচ্ছতার সঙ্গে</h1><p>AdView BD-তে অ্যাকাউন্ট তৈরি বা লগইন করতে পারবেন। বিজ্ঞাপন দেখা, রেফারেল, আয় ও পেমেন্টের তথ্য কেবল সার্ভার থেকে যাচাই হলে দেখানো হবে।</p><div class="notice">গুরুত্বপূর্ণ: বর্তমানে যাচাইকৃত বিজ্ঞাপন, ভিউ কাউন্ট, আয় বা পেমেন্ট ব্যবস্থা নিশ্চিত করা হয়নি। তাই কোনো ভুয়া আয় বা ব্যালেন্স দেখানো হচ্ছে না।</div></div><div class="heroart" aria-hidden="true">▶︎</div></section>
+<section class="grid" id="authGrid">
+<div class="panel"><h2>নতুন অ্যাকাউন্ট</h2><p class="sub">ইমেইল যাচাই করে নিবন্ধন করুন</p>
+<form id="registerForm">
+<div class="field"><label for="regName">আপনার নাম</label><input id="regName" autocomplete="name" required maxlength="80" placeholder="পূর্ণ নাম"></div>
+<div class="field"><label for="regEmail">ইমেইল</label><input id="regEmail" type="email" autocomplete="email" required placeholder="name@example.com"></div>
+<div class="field"><label for="regPass">পাসওয়ার্ড</label><input id="regPass" type="password" autocomplete="new-password" required minlength="8" placeholder="কমপক্ষে ৮ অক্ষর"></div>
+<button class="btn" id="sendCodeBtn" type="submit">যাচাইকরণ কোড পাঠান</button>
+</form>
+<form id="verifyForm" class="hidden">
+<div class="field"><label for="verifyCode">ইমেইলে পাওয়া কোড</label><input id="verifyCode" inputmode="numeric" autocomplete="one-time-code" required maxlength="12" placeholder="যাচাইকরণ কোড"></div>
+<button class="btn" type="submit">কোড যাচাই ও নিবন্ধন</button>
+<button class="btn secondary" id="backReg" type="button" style="margin-top:8px">ফিরে যান</button>
+</form><div class="status" id="regStatus" role="status" aria-live="polite"></div></div>
+<div class="panel"><h2>লগইন</h2><p class="sub">আগের অ্যাকাউন্টে প্রবেশ করুন</p>
+<form id="loginForm">
+<div class="field"><label for="loginEmail">ইমেইল</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="name@example.com"></div>
+<div class="field"><label for="loginPass">পাসওয়ার্ড</label><input id="loginPass" type="password" autocomplete="current-password" required placeholder="পাসওয়ার্ড"></div>
+<button class="btn" id="loginBtn" type="submit">লগইন</button>
+</form><div class="status" id="loginStatus" role="status" aria-live="polite"></div></div></section>
+<section class="panel dash hidden" id="dashboard" aria-live="polite"><div class="dashhead"><div><div class="eyebrow">অ্যাকাউন্ট</div><h2>স্বাগতম, <span id="userName"></span></h2><p class="sub" id="userEmail"></p></div><button class="btn secondary" id="logoutBtn" style="width:auto">লগআউট</button></div><div class="dashbox"><strong>আয়ের ড্যাশবোর্ড এখনো চালু নয়</strong><span>বিজ্ঞাপনদাতা যাচাই, বাস্তব ভিউ যাচাই, সার্ভার-সংরক্ষিত ব্যালেন্স এবং পেমেন্ট সিস্টেম চালু না হওয়া পর্যন্ত এখানে কোনো আয় দেখানো হবে না।</span></div><div class="status show" id="dashStatus">আপনি লগইন করেছেন। নিরাপত্তার জন্য এই ব্রাউজারে পাসওয়ার্ড বা লগইন তথ্য সংরক্ষণ করা হয়নি।</div></section>
+</main>
+<footer class="foot">© <span id="year"></span> AdView BD · নিরাপদ ও স্বচ্ছ ব্যবহারের প্রতিশ্রুতি<br>সহায়তা: ওয়েবসাইটের প্রকৃত যোগাযোগ ঠিকানা যুক্ত না হওয়া পর্যন্ত কোনো যোগাযোগের ঠিকানা দেখানো হচ্ছে না।</footer>
+<script>
+'use strict';
+const API='https://adviewbd-backend.onrender.com';
+const $=id=>document.getElementById(id);
+let pending={email:'',name:'',password:''};
+function message(id,text,type='error'){const el=$(id);el.textContent=text;el.className='status show '+type}
+function busy(button,on,label){button.disabled=on;button.innerHTML=on?'<span class="spinner"></span> অপেক্ষা করুন…':label}
+async function request(path,data){let response;try{response=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}catch(e){throw new Error('সার্ভারে সংযোগ করা যাচ্ছে না। ব্যাকএন্ড সার্ভার চালু আছে কি না যাচাই প্রয়োজন।')}
+let result;try{result=await response.json()}catch(e){throw new Error('সার্ভার থেকে সঠিক JSON উত্তর পাওয়া যায়নি।')}
+if(!response.ok||result.success===false)throw new Error(result.message||'অনুরোধটি সম্পন্ন হয়নি।');return result}
+$('registerForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('sendCodeBtn');pending={name:$('regName').value.trim(),email:$('regEmail').value.trim(),password:$('regPass').value};if(!pending.name||pending.password.length<8){message('regStatus','নাম দিন এবং কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড ব্যবহার করুন।');return}busy(btn,true);try{await request('/send-verification-code',{email:pending.email});$('registerForm').classList.add('hidden');$('verifyForm').classList.remove('hidden');message('regStatus','যাচাইকরণ কোড পাঠানোর অনুরোধ গ্রহণ করা হয়েছে। ইনবক্স ও স্প্যাম ফোল্ডার দেখুন।','ok')}catch(err){message('regStatus',err.message)}finally{busy(btn,false,'যাচাইকরণ কোড পাঠান')}});
+$('verifyForm').addEventListener('submit',async e=>{e.preventDefault();const btn=e.submitter;busy(btn,true);try{const code=$('verifyCode').value.trim();await request('/verify-code',{email:pending.email,code});const result=await request('/api/register',{name:pending.name,email:pending.email,password:pending.password});message('regStatus',result.message||'নিবন্ধনের অনুরোধ সম্পন্ন হয়েছে। এখন লগইন করুন।','ok');$('verifyForm').classList.add('hidden');$('registerForm').classList.remove('hidden');$('loginEmail').value=pending.email;$('loginPass').value='';pending={email:'',name:'',password:''}}catch(err){message('regStatus',err.message)}finally{busy(btn,false,'কোড যাচাই ও নিবন্ধন')}});
+$('backReg').addEventListener('click',()=>{$('verifyForm').classList.add('hidden');$('registerForm').classList.remove('hidden')});
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('loginBtn');busy(btn,true);try{const result=await request('/api/login',{email:$('loginEmail').value.trim(),password:$('loginPass').value});if(!result.name)throw new Error('সার্ভার থেকে ব্যবহারকারীর নাম পাওয়া যায়নি।');$('userName').textContent=result.name;$('userEmail').textContent=$('loginEmail').value.trim();$('authGrid').classList.add('hidden');$('dashboard').classList.remove('hidden')}catch(err){message('loginStatus',err.message)}finally{busy(btn,false,'লগইন')}});
+$('logoutBtn').addEventListener('click',()=>{$('dashboard').classList.add('hidden');$('authGrid').classList.remove('hidden');$('loginPass').value='';message('loginStatus','আপনি লগআউট করেছেন।','ok')});
+$('year').textContent=new Date().getFullYear();
+$('langBtn').addEventListener('click',()=>{const english=$('langBtn').textContent==='English';$('langBtn').textContent=english?'বাংলা':'English';document.documentElement.lang=english?'en':'bn';document.querySelector('.brand small').textContent=english?'Transparent advertising • Trusted experience':'স্বচ্ছ বিজ্ঞাপন • বিশ্বাসযোগ্য অভিজ্ঞতা';document.querySelector('.eyebrow').textContent=english?'ADVERTISING PLATFORM FOR BANGLADESH':'বাংলাদেশের জন্য বিজ্ঞাপন প্ল্যাটফর্ম';document.querySelector('.hero h1').textContent=english?'Watch and promote ads—with transparency':'বিজ্ঞাপন দেখুন, প্রচার করুন—স্বচ্ছতার সঙ্গে';});
+</script>
+</body></html>

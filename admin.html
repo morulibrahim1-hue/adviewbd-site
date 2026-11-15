@@ -8,7 +8,7 @@
 <section id="auth" class="panel"><h2>অ্যাডমিন লগইন</h2><p class="muted">শুধু অনুমোদিত অ্যাডমিন অ্যাকাউন্ট প্রবেশ করতে পারবে।</p>
 <div class="field"><label>ইমেইল</label><input id="email" type="email" autocomplete="username" placeholder="morulibrahim1@gmail.com"></div>
 <div class="field"><label>পাসওয়ার্ড</label><input id="password" type="password" autocomplete="current-password" minlength="8"></div>
-<div class="row"><button class="btn" id="login">লগইন</button><button class="btn alt" id="signup">প্রথম অ্যাডমিন অ্যাকাউন্ট তৈরি</button></div>
+<div class="row"><button class="btn" id="login">লগইন</button><button class="btn alt" id="signup">প্রথম অ্যাডমিন অ্যাকাউন্ট তৈরি</button></div><div style="margin-top:10px"><button class="btn alt" id="resend">যাচাইকরণ ইমেইল আবার পাঠান</button></div>
 <div id="authmsg" class="status hidden" role="status"></div>
 </section>
 <section id="app" class="hidden">
@@ -36,6 +36,7 @@ async function adminCheck(){const {data:{session}}=await supabase.auth.getSessio
 }
 function showAuth(){$('auth').classList.remove('hidden');$('app').classList.add('hidden')}
 $('login').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){msg('authmsg',error.message,true);return}await adminCheck()};
+$('resend').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','নির্ধারিত অ্যাডমিন ইমেইল লিখুন।',true);return}const {error}=await supabase.auth.resend({type:'signup',email,options:{emailRedirectTo:window.location.href}});if(error){msg('authmsg','ইমেইল পাঠানো যায়নি: '+error.message,true);return}msg('authmsg','যাচাইকরণ ইমেইল আবার পাঠানো হয়েছে। Gmail-এর Inbox ও Spam ফোল্ডার দেখুন।')};
 $('signup').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','প্রথম অ্যাডমিনের নির্ধারিত ইমেইল ব্যবহার করুন।',true);return}const password=$('password').value;if(password.length<8){msg('authmsg','কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।',true);return}const {data,error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:window.location.href,data:{display_name:'AdView BD Admin'}}});if(error){msg('authmsg',error.message,true);return}if(data.session){await adminCheck()}else msg('authmsg','ইমেইলে Supabase-এর confirmation link পাঠানো হয়েছে। ইমেইল যাচাই করে আবার লগইন করুন।')};
 $('logout').onclick=async()=>{await supabase.auth.signOut();showAuth()};
 function renderNav(){$('nav').innerHTML=tabs.map(([id,label])=>'<button data-tab="'+id+'">'+label+'</button>').join('');$('nav').querySelectorAll('button').forEach(b=>b.onclick=()=>openTab(b.dataset.tab))}

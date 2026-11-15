@@ -5,7 +5,12 @@
 </style></head><body>
 <header><div class="wrap"><strong>AdView BD — ADMIN</strong><small>নিরাপদ প্রশাসনিক প্যানেল</small></div></header>
 <main class="wrap">
-<section id="maintenance" class="panel"><h2>অ্যাডমিন লগইন সাময়িক বন্ধ</h2><p class="muted">অ্যাডমিন লগইন সুবিধা আপাতত বন্ধ রাখা হয়েছে। পরে লগইন ব্যবস্থা ঠিক করে আবার চালু করা হবে।</p></section>
+<section id="preview">
+<div class="panel"><h2>অ্যাডমিন ড্যাশবোর্ড — ডেমো প্রিভিউ</h2><p class="muted">লগইন ছাড়াই অ্যাডমিন অ্যাপের মেনু ও ফিচারগুলো দেখুন। এটি শুধু প্রিভিউ; আসল ডেটা বা অ্যাডমিন কাজের অনুমতি নেই।</p><div class="status">ডেমো প্রিভিউ — এখানে কোনো বাস্তব ব্যবহারকারী, পেমেন্ট বা উত্তোলনের তথ্য দেখানো হয় না।</div></div>
+<nav class="nav" id="preview-nav"></nav>
+<section class="panel" id="preview-content"><h2>সারাংশ</h2><p class="muted">অ্যাডমিন অ্যাপের বিভাগগুলো দেখতে নিচের মেনু নির্বাচন করুন।</p></section>
+</section>
+<section id="maintenance" class="panel hidden"><h2>অ্যাডমিন লগইন সাময়িক বন্ধ</h2><p class="muted">অ্যাডমিন লগইন সুবিধা আপাতত বন্ধ রাখা হয়েছে। পরে লগইন ব্যবস্থা ঠিক করে আবার চালু করা হবে।</p></section>
 <section id="auth" class="panel hidden"><h2>অ্যাডমিন লগইন</h2><p class="muted">শুধু অনুমোদিত অ্যাডমিন অ্যাকাউন্ট প্রবেশ করতে পারবে।</p>
 <div class="field"><label>ইমেইল</label><input id="email" type="email" autocomplete="username" placeholder="morulibrahim1@gmail.com"></div>
 <div class="field"><label>পাসওয়ার্ড</label><input id="password" type="password" autocomplete="current-password" minlength="8"></div>
@@ -62,5 +67,28 @@ if(tab==='ads'){const r=await supabase.from('ads').update({is_active:value==='tr
 else{const r=await supabase.rpc(c.rpc,{[c.id]:id,p_status:value,p_note:'Updated from AdView BD Admin'});error=r.error}
 if(error){msg('appmsg','পরিবর্তন ব্যর্থ: '+error.message,true);return}msg('appmsg','পরিবর্তন সফল হয়েছে।');await openTab(tab);await loadStats()}
 async function overview(){$('content').innerHTML='<h2>সিস্টেম সারাংশ</h2><p class="muted">বাস্তব ডেটাবেস রেকর্ডের ভিত্তিতে হিসাব।</p><div class="status">শুধু যাচাইকৃত বিজ্ঞাপন ভিউ সম্পন্ন হলে আয় গণনা হবে। এই প্যানেল থেকে কোনো ভুয়া ব্যালেন্স বা পেমেন্ট তৈরি করা হয় না।</div><div class="row" style="margin-top:12px"><button class="btn alt" id="refresh">রিফ্রেশ</button></div>'; $('refresh').onclick=async()=>{await loadStats();await overview()}}
-await supabase.auth.getSession().then(({data})=>{if(data.session)adminCheck()});
+
+const previewDescriptions={
+ overview:['সারাংশ','ব্যবহারকারী, বিজ্ঞাপনদাতা, ক্যাম্পেইন, বিজ্ঞাপন ও উত্তোলনের সারাংশ এখানে দেখানোর জন্য নির্ধারিত।'],
+ companies:['বিজ্ঞাপনদাতা','বিজ্ঞাপনদাতার আবেদন ও যাচাইয়ের বিভাগ।'],
+ campaigns:['ক্যাম্পেইন','বিজ্ঞাপন প্রচারণা, বাজেট ও ক্যাম্পেইনের অবস্থা ব্যবস্থাপনার বিভাগ।'],
+ ads:['বিজ্ঞাপন','প্রকাশিত বিজ্ঞাপন ও বিজ্ঞাপনের অবস্থা ব্যবস্থাপনার বিভাগ।'],
+ profiles:['ব্যবহারকারী','প্ল্যাটফর্মের ব্যবহারকারী অ্যাকাউন্টের তালিকার বিভাগ।'],
+ withdrawal_requests:['উত্তোলন','ব্যবহারকারীদের টাকা উত্তোলনের অনুরোধ পর্যালোচনার বিভাগ।'],
+ ad_events:['ভিউ যাচাই','বিজ্ঞাপন দেখা ও ভিউ যাচাইয়ের রেকর্ডের বিভাগ।'],
+ campaign_daily_reports:['রিপোর্ট','ক্যাম্পেইনের দৈনিক পরিসংখ্যান ও রিপোর্টের বিভাগ।'],
+ admin_audit_logs:['অডিট লগ','অ্যাডমিনের কার্যক্রমের হিসাব রাখার বিভাগ।']
+};
+$('preview-nav').innerHTML=tabs.map(([id,label])=>'<button type="button" data-preview="'+id+'">'+label+'</button>').join('');
+$('preview-nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+ const [title,desc]=previewDescriptions[b.dataset.preview];
+ $('preview-nav').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
+ $('preview-content').innerHTML='<h2>'+title+'</h2><p>'+desc+'</p><div class="status">প্রিভিউ মোডে আসল রেকর্ড ও পরিবর্তনের সুবিধা বন্ধ।</div>';
+});
+$('preview-nav').querySelector('[data-preview="overview"]').click();
+$('preview').classList.remove('hidden');
+$('maintenance').classList.add('hidden');
+$('auth').classList.add('hidden');
+$('app').classList.add('hidden');
+
 </script></body></html>

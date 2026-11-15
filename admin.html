@@ -40,7 +40,7 @@ async function adminCheck(){const {data:{session}}=await supabase.auth.getSessio
  if(user.app_metadata?.role!=='admin'){await supabase.auth.signOut();showAuth();msg('authmsg','এই ইমেইলের অ্যাডমিন অনুমতি নেই।',true);return}
  $('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
 }
-function showAuth(){$('auth').classList.add('hidden');$('app').classList.add('hidden');$('maintenance').classList.remove('hidden')}
+function showAuth(){$('preview').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
 $('login').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){msg('authmsg',error.message,true);return}await adminCheck()};
 $('resend').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','নির্ধারিত অ্যাডমিন ইমেইল লিখুন।',true);return}const {error}=await supabase.auth.resend({type:'signup',email,options:{emailRedirectTo:window.location.href}});if(error){msg('authmsg','ইমেইল পাঠানো যায়নি: '+error.message,true);return}msg('authmsg','যাচাইকরণ ইমেইল আবার পাঠানো হয়েছে। Gmail-এর Inbox ও Spam ফোল্ডার দেখুন।')};
 $('signup').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','প্রথম অ্যাডমিনের নির্ধারিত ইমেইল ব্যবহার করুন।',true);return}const password=$('password').value;if(password.length<8){msg('authmsg','কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।',true);return}const {data,error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:window.location.href,data:{display_name:'AdView BD Admin'}}});if(error){msg('authmsg',error.message,true);return}if(data.session){await adminCheck()}else msg('authmsg','ইমেইলে Supabase-এর confirmation link পাঠানো হয়েছে। ইমেইল যাচাই করে আবার লগইন করুন।')};
@@ -86,9 +86,10 @@ $('preview-nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{
  $('preview-content').innerHTML='<h2>'+title+'</h2><p>'+desc+'</p><div class="status">প্রিভিউ মোডে আসল রেকর্ড ও পরিবর্তনের সুবিধা বন্ধ।</div>';
 });
 $('preview-nav').querySelector('[data-preview="overview"]').click();
-$('preview').classList.remove('hidden');
+$('preview').classList.add('hidden');
 $('maintenance').classList.add('hidden');
-$('auth').classList.add('hidden');
+$('auth').classList.remove('hidden');
 $('app').classList.add('hidden');
+adminCheck();
 
 </script></body></html>

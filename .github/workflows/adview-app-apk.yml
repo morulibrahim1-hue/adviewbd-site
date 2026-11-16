@@ -27,6 +27,7 @@ jobs:
         run: |
           mkdir -p www
           cp index.html www/index.html
+          cp packages.html www/packages.html
           npm init -y
           npm install @capacitor/core@7.4.3 @capacitor/cli@7.4.3 @capacitor/android@7.4.3
           npx cap init "AdView BD" "bd.adview.app" --web-dir www

@@ -66,8 +66,8 @@ const {data,error}=await q;if(error){$('records').textContent='তথ্য ল�
 $('records').innerHTML=data.map(row=>'<article class="item"><strong>'+safe(row[c.cols[0]])+'</strong><p>'+c.cols.slice(1).map(k=>'<b>'+safe(k)+':</b> '+safe(row[k])).join('<br>')+'</p>'+(c.actions?'<div class="row">'+c.actions.map(([v,l])=>'<button class="btn '+(v==='rejected'||v==='suspended'?'red':'alt')+'" data-id="'+safe(row.id)+'" data-value="'+v+'">'+l+'</button>').join('')+'</div>':'')+'</article>').join('');
 $('records').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>changeStatus(tab,b.dataset.id,b.dataset.value));
 }
-async function changeStatus(tab,id,value){if(!confirm('এই পরিবর্তনটি নিশ্চিত করবেন?'))return;const c=config[tab];let error;
-if(tab==='ads'){const r=await supabase.from('ads').update({is_active:value==='true'}).eq('id',id);error=r.error}
+async function changeStatus(tab,id,value){if(!confirm('এই পরিবর্তনটি নিশ্চিত করবেন?'))return;if(tab==='withdrawal_requests'&&value==='paid'&&!confirm('টাকা কি সত্যিই বিকাশ/নগদ/রকেটে পাঠানো হয়েছে? টাকা না পাঠালে এখানে নিশ্চিত করবেন না।'))return;const c=config[tab];let error;
+if(tab==='ads'){const r=await supabase.functions.invoke('admin-ops',{body:{action:'review',kind:'ad',id,status:value==='true'?'approved':'disabled',note:'Updated from AdView BD Admin'}});error=r.error}
 else{const r=await supabase.rpc(c.rpc,{[c.id]:id,p_status:value,p_note:'Updated from AdView BD Admin'});error=r.error}
 if(error){msg('appmsg','পরিবর্তন ব্যর্থ: '+error.message,true);return}msg('appmsg','পরিবর্তন সফল হয়েছে।');await openTab(tab);await loadStats()}
 async function overview(){$('content').innerHTML='<h2>সিস্টেম সারাংশ</h2><p class="muted">বাস্তব ডেটাবেস রেকর্ডের ভিত্তিতে হিসাব।</p><div class="status">শুধু যাচাইকৃত বিজ্ঞাপন ভিউ সম্পন্ন হলে আয় গণনা হবে। এই প্যানেল থেকে কোনো ভুয়া ব্যালেন্স বা পেমেন্ট তৈরি করা হয় না।</div><div class="row" style="margin-top:12px"><button class="btn alt" id="refresh">রিফ্রেশ</button></div>'; $('refresh').onclick=async()=>{await loadStats();await overview()}}

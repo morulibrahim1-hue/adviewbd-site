@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'admin.html'
+      - 'packages.html'
       - '.github/workflows/android-admin-apk.yml'
   workflow_dispatch:
 permissions:
@@ -28,6 +29,7 @@ jobs:
         run: |
           mkdir -p www
           cp admin.html www/index.html
+          cp packages.html www/packages.html
           npm init -y
           npm install @capacitor/core@7.4.3 @capacitor/cli@7.4.3 @capacitor/android@7.4.3
           npx cap init "AdView BD Admin" "bd.adview.admin" --web-dir www

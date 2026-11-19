@@ -34,6 +34,7 @@ jobs:
           npx cap init "AdView BD" "bd.adview.app" --web-dir www
           node -e "const fs=require('fs');const p='capacitor.config.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));c.server={...(c.server||{}),url:'https://morulibrahim1-hue.github.io/adviewbd-site/index.html',cleartext:false};fs.writeFileSync(p,JSON.stringify(c,null,2));"
           npx cap add android
+          node -e "const fs=require('fs');const p='android/app/build.gradle';let s=fs.readFileSync(p,'utf8');if(!/debug\\s*\\{/.test(s)){s=s.replace(/buildTypes\\s*\\{/, \"buildTypes {\\n        debug { minifyEnabled true; shrinkResources true; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' }\");}fs.writeFileSync(p,s);"
           npx cap sync android
       - name: Build Android APK
         run: |

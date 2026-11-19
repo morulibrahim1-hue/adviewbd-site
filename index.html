@@ -54,6 +54,7 @@ function setupUserPages(){
  const packageCard=find("homePackages");
  const buyCard=cards.find(c=>c.querySelector('a[href="./packages.html"]'));
  const walletCard=find("available");
+ if(walletCard){walletCard.classList.add("balance-highlight");const heading=walletCard.querySelector("h2");if(heading)heading.textContent="আপনার ব্যালেন্স";}
  const withdrawCard=find("withdrawBtn");
  const idCard=find("publicUserId");
  const supportCard=find("supportCard");

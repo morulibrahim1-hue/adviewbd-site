@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'packages.html'
       - '.github/workflows/adview-app-apk.yml'
   workflow_dispatch:
 permissions:

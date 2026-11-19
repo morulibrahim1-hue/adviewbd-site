@@ -29,13 +29,13 @@ const $=id=>document.getElementById(id);let user=null;let current='overview';
 const tabs=[['overview','সারাংশ'],['companies','বিজ্ঞাপনদাতা'],['campaigns','ক্যাম্পেইন'],['ads','বিজ্ঞাপন'],['profiles','ব্যবহারকারী'],['withdrawal_requests','উত্তোলন'],['package_purchase_requests','প্যাকেজ আবেদন'],['support','লাইভ সাপোর্ট'],['ad_events','ভিউ যাচাই'],['campaign_daily_reports','রিপোর্ট'],['admin_audit_logs','অডিট লগ']];
 function msg(id,text,error=false){$(id).textContent=text;$(id).className='status'+(error?' err':'')}
 function safe(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function adminCheck(){const {data:{session}}=await supabase.auth.getSession();if(!session){showAuth();return}const {data:{user:u}}=await supabase.auth.getUser();if(!u){showAuth();return}user=u;
+async function adminCheck(){const {data:{session}}=await supabase.auth.getSession();if(!session){showAuth();return}const u=session.user;if(!u){showAuth();return}user=u;
  if(u.email?.toLowerCase()==='morulibrahim1@gmail.com'&&u.app_metadata?.role!=='admin'){
   const {error}=await supabase.functions.invoke('bootstrap-first-admin');if(error){showAuth();msg('authmsg','প্রথম অ্যাডমিন যাচাই হয়নি: '+error.message,true);return}
   await supabase.auth.refreshSession();const {data:{user:refreshed}}=await supabase.auth.getUser();user=refreshed;
  }
  if(user.app_metadata?.role!=='admin'){await supabase.auth.signOut();showAuth();msg('authmsg','এই ইমেইলের অ্যাডমিন অনুমতি নেই।',true);return}
- $('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
+ $('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await Promise.all([loadStats(),openTab(current)]);
 }
 function showAuth(){$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
 $('login').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){msg('authmsg',error.message,true);return}await adminCheck()};

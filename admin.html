@@ -5,11 +5,6 @@
 </style></head><body>
 <header><div class="wrap"><strong>AdView BD — ADMIN</strong><small>নিরাপদ প্রশাসনিক প্যানেল</small></div></header>
 <main class="wrap">
-<section id="preview">
-<div class="panel"><h2>অ্যাডমিন ড্যাশবোর্ড — ডেমো প্রিভিউ</h2><p class="muted">লগইন ছাড়াই অ্যাডমিন অ্যাপের মেনু ও ফিচারগুলো দেখুন। এটি শুধু প্রিভিউ; আসল ডেটা বা অ্যাডমিন কাজের অনুমতি নেই।</p><div class="status">ডেমো প্রিভিউ — এখানে কোনো বাস্তব ব্যবহারকারী, পেমেন্ট বা উত্তোলনের তথ্য দেখানো হয় না।</div></div>
-<nav class="nav" id="preview-nav"></nav>
-<section class="panel" id="preview-content"><h2>সারাংশ</h2><p class="muted">অ্যাডমিন অ্যাপের বিভাগগুলো দেখতে নিচের মেনু নির্বাচন করুন।</p></section>
-</section>
 <section id="maintenance" class="panel hidden"><h2>অ্যাডমিন লগইন সাময়িক বন্ধ</h2><p class="muted">অ্যাডমিন লগইন সুবিধা আপাতত বন্ধ রাখা হয়েছে। পরে লগইন ব্যবস্থা ঠিক করে আবার চালু করা হবে।</p></section>
 <section id="auth" class="panel hidden"><h2>অ্যাডমিন লগইন</h2><p class="muted">শুধু অনুমোদিত অ্যাডমিন অ্যাকাউন্ট প্রবেশ করতে পারবে।</p>
 <div class="field"><label>ইমেইল</label><input id="email" type="email" autocomplete="username" placeholder="morulibrahim1@gmail.com"></div>
@@ -40,9 +35,9 @@ async function adminCheck(){const {data:{session}}=await supabase.auth.getSessio
   await supabase.auth.refreshSession();const {data:{user:refreshed}}=await supabase.auth.getUser();user=refreshed;
  }
  if(user.app_metadata?.role!=='admin'){await supabase.auth.signOut();showAuth();msg('authmsg','এই ইমেইলের অ্যাডমিন অনুমতি নেই।',true);return}
- $('preview').classList.add('hidden');$('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
+ $('auth').classList.add('hidden');$('maintenance').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email+' · Super Admin';renderNav();await loadStats();await openTab(current);
 }
-function showAuth(){$('preview').classList.remove('hidden');$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
+function showAuth(){$('maintenance').classList.add('hidden');$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
 $('login').onclick=async()=>{const {error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){msg('authmsg',error.message,true);return}await adminCheck()};
 $('forgot').onclick=async()=>{const email=$('email').value.trim();if(email.toLowerCase()!=='morulibrahim1@gmail.com'){msg('authmsg','অ্যাডমিন ইমেইল লিখুন, তারপর আবার চেষ্টা করুন।',true);return}const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});if(error){msg('authmsg','রিসেট ইমেইল পাঠানো যায়নি: '+error.message,true);return}msg('authmsg','পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে। Gmail-এর Inbox ও Spam ফোল্ডার দেখুন।')};
 $('savePassword').onclick=async()=>{const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<8){msg('resetmsg','পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের দিন।',true);return}if(p!==c){msg('resetmsg','দুটি পাসওয়ার্ড মিলছে না।',true);return}const {error}=await supabase.auth.updateUser({password:p});if(error){msg('resetmsg','পাসওয়ার্ড পরিবর্তন হয়নি: '+error.message,true);return}await supabase.auth.signOut();$('resetPanel').classList.add('hidden');$('auth').classList.remove('hidden');msg('authmsg','পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে। নতুন পাসওয়ার্ড দিয়ে লগইন করুন।')};
@@ -87,29 +82,6 @@ async function reviewPackagePurchase(id,status){
 async function changeStatus(tab,id,value){if(!confirm('এই পরিবর্তনটি নিশ্চিত করবেন?'))return;if(tab==='withdrawal_requests'&&value==='paid'&&!confirm('টাকা কি সত্যিই বিকাশ/নগদ/রকেটে পাঠানো হয়েছে? টাকা না পাঠালে এখানে নিশ্চিত করবেন না।'))return;const kinds={companies:'company',campaigns:'campaign',ads:'ad',withdrawal_requests:'withdrawal'};const status=tab==='ads'?(value==='true'?'approved':'disabled'):value;const {error}=await supabase.functions.invoke('admin-ops',{body:{action:'review',kind:kinds[tab],id,status,note:'Updated from AdView BD Admin'}});if(error){msg('appmsg','পরিবর্তন ব্যর্থ: '+error.message,true);return}msg('appmsg','পরিবর্তন সফল হয়েছে।');await openTab(tab);await loadStats()}
 async function overview(){$('content').innerHTML='<h2>সিস্টেম সারাংশ</h2><p class="muted">বাস্তব ডেটাবেস রেকর্ডের ভিত্তিতে হিসাব।</p><div class="status">শুধু যাচাইকৃত বিজ্ঞাপন ভিউ সম্পন্ন হলে আয় গণনা হবে। এই প্যানেল থেকে কোনো ভুয়া ব্যালেন্স বা পেমেন্ট তৈরি করা হয় না।</div><div class="row" style="margin-top:12px"><button class="btn alt" id="refresh">রিফ্রেশ</button></div>'; $('refresh').onclick=async()=>{await loadStats();await overview()}}
 
-const previewDescriptions={
- overview:['সারাংশ','মোট ব্যবহারকারী, বিজ্ঞাপনদাতা, ক্যাম্পেইন, বিজ্ঞাপন ও উত্তোলনের সংখ্যা; সর্বশেষ কার্যক্রম এবং সিস্টেমের অবস্থা।'],
- companies:['বিজ্ঞাপনদাতা','নতুন প্রতিষ্ঠানের আবেদন দেখা, পরিচয়/যোগাযোগের তথ্য যাচাই, অনুমোদন, বাতিল বা স্থগিত করা।'],
- campaigns:['ক্যাম্পেইন','ক্যাম্পেইনের শিরোনাম, বাজেট, নির্ধারিত ভিউ ও অবস্থা দেখা; অনুমোদন, চালু, বিরতি বা বাতিল করা।'],
- ads:['বিজ্ঞাপন','বিজ্ঞাপনের শিরোনাম, ক্যাম্পেইন, সময়সীমা ও মিডিয়া লিংক দেখা; বিজ্ঞাপন চালু বা বন্ধ করা।'],
- profiles:['ব্যবহারকারী','ব্যবহারকারীর আইডি, নাম, অ্যাকাউন্টের ধরন ও নিবন্ধনের সময় দেখা।'],
- withdrawal_requests:['উত্তোলন','উত্তোলনের পরিমাণ, পদ্ধতি, পেআউট অ্যাকাউন্ট ও অনুরোধের অবস্থা দেখা; প্রক্রিয়াধীন, পরিশোধিত বা প্রত্যাখ্যান করা.'],
- package_purchase_requests:['প্যাকেজ আবেদন','Silver, Golden ও Platinum প্যাকেজ কেনার পেমেন্ট তথ্য দেখা এবং যাচাই করে Accept বা Reject করা। Accept করলে প্যাকেজ স্বয়ংক্রিয়ভাবে চালু হবে।'],
- ad_events:['ভিউ যাচাই','কোন ব্যবহারকারী কোন বিজ্ঞাপন কতক্ষণ দেখেছেন, ইভেন্টের ধরন ও যাচাইয়ের অবস্থা দেখা।'],
- campaign_daily_reports:['রিপোর্ট','প্রতিদিনের শুরু, সম্পন্ন, যাচাইকৃত ও সন্দেহজনক ভিউয়ের হিসাব দেখা।'],
- admin_audit_logs:['অডিট লগ','কোন অ্যাডমিন কখন কোন টেবিল বা রেকর্ডে কী কাজ করেছেন, তার অডিট ইতিহাস দেখা।']
-};
-$('preview-nav').innerHTML=tabs.map(([id,label],i)=>'<button type="button" data-preview="'+id+'"><span style="display:inline-block;min-width:34px;font-variant-numeric:tabular-nums">'+String(i+1).padStart(2,'0')+'.</span> '+label+'</button>').join('');
-$('preview-nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{
- const [title,desc]=previewDescriptions[b.dataset.preview];
- $('preview-nav').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));
- $('preview-content').innerHTML='<h2>'+title+'</h2><p>'+desc+'</p><div class="status">এখানে প্রতিটি মেনুর কাজ ও কী কী তথ্য থাকবে তা দেখানো হচ্ছে। আসল রেকর্ড দেখা ও পরিবর্তনের জন্য নিচে অ্যাডমিন যাচাই করে প্রবেশ করুন।</div>';
-});
-$('preview-nav').querySelector('[data-preview="overview"]').click();
-$('preview').classList.remove('hidden');
-$('maintenance').classList.add('hidden');
-$('auth').classList.remove('hidden');
-$('app').classList.add('hidden');
 adminCheck();
 
 </script></body></html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#075b49"><title>AdView BD · Admin Package Settings</title>
+<style>
+:root{font-family:system-ui,"Noto Sans Bengali",sans-serif;color:#17372e;background:#f2f7f4}*{box-sizing:border-box}body{margin:0}header{background:#064c43;color:white;padding:18px}main{max-width:850px;margin:auto;padding:12px}.card{background:white;border:1px solid #dce9e2;border-radius:15px;padding:15px;margin:12px 0}.muted{color:#66776e;font-size:13px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:180px}label{display:block;font-size:13px;font-weight:700;margin:10px 0 4px}input{width:100%;padding:11px;border:1px solid #cbdad2;border-radius:9px;font:inherit}.btn{border:0;border-radius:9px;padding:11px 14px;background:#08785e;color:white;font-weight:700;cursor:pointer}.red{background:#a83232}.item{border-top:1px solid #e2eae5;padding:12px 0;overflow-wrap:anywhere}.msg{padding:10px;border-radius:9px;background:#e9f4ef;margin:8px 0;font-size:13px}.err{background:#fff0ee;color:#8a2924}.hidden{display:none!important}.pill{display:inline-block;padding:3px 8px;border-radius:20px;background:#e9f4ef;font-size:12px}
+</style></head><body><header><main><h2 style="margin:0">AdView BD · Admin প্যাকেজ সেটিংস</h2><div>শুধু অনুমোদিত অ্যাডমিনের জন্য</div></main></header>
+<main><div class="card"><div id="who" class="muted">অ্যাডমিন যাচাই হচ্ছে…</div><div id="topmsg"></div></div>
+<section id="adminArea" class="hidden">
+<div class="card"><h3>প্যাকেজ মূল্য ও সুবিধা</h3><div id="adminPackages">লোড হচ্ছে…</div><button class="btn" id="savePackages">প্যাকেজ সেটিংস সংরক্ষণ</button><div id="adminPkgMsg"></div></div>
+<div class="card"><h3>পেমেন্ট নম্বর</h3><div id="adminMethods">লোড হচ্ছে…</div><button class="btn" id="saveMethods">পেমেন্ট সেটিংস সংরক্ষণ</button><div id="adminMethodMsg"></div></div>
+<div class="card"><h3>পেমেন্ট আবেদন যাচাই</h3><div id="requests">লোড হচ্ছে…</div></div>
+</section><div class="card"><a href="./admin.html">অ্যাডমিন ড্যাশবোর্ডে ফিরে যান</a></div></main>
+<script type="module">
+import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.0/+esm";
+const URL="https://kvaelanllixuztefxpcf.supabase.co",KEY="sb_publishable_T6TEoxQJdm1sY-eu1qV54g_DOXXGdZ3";
+const db=createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=id=>document.getElementById(id),safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const logos={bkash:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/bkash.png",nagad:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/nagad.png",rocket:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/rocket.png",bank:"https://commons.wikimedia.org/wiki/Special:FilePath/Dutch-bangla-bank-ltd.svg"};
+let packages=[],methods=[];
+function msg(id,t,bad=false){$(id).innerHTML='<div class="msg '+(bad?'err':'')+'">'+safe(t)+'</div>'}
+async function boot(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session)throw Error("প্রথমে Admin App-এ অ্যাডমিন হিসেবে লগইন করুন।");
+ const {data:{user},error}=await db.auth.getUser();if(error||!user)throw Error("লগইন যাচাই করা যায়নি।");
+ if(user.app_metadata?.role!=="admin")throw Error("আপনার অ্যাডমিন অনুমতি নেই।");
+ $("who").textContent=(user.email||user.phone||"Admin")+" · Admin";
+ $("adminArea").classList.remove("hidden");
+ await loadAdmin();
+}
+async function loadAdmin(){
+ const p=await db.from("membership_packages").select("*").order("display_order");if(p.error)throw p.error;packages=p.data||[];
+ $("adminPackages").innerHTML=packages.map(x=>'<div class="item"><b>'+safe(x.name)+'</b><div class="row"><div><label>প্যাকেজ মূল্য (৳)</label><input type="number" min="0" step=".01" id="price_'+x.code+'" value="'+x.price_bdt+'" '+(x.code==="free"?'disabled title="ফ্রি ট্রায়াল সবসময় ০ টাকা"':'')+'></div><div><label>বিজ্ঞাপনপ্রতি আয় (৳)</label><input type="number" min="0" step=".01" id="reward_'+x.code+'" value="'+x.reward_per_verified_ad_bdt+'"></div><div><label>দৈনিক বিজ্ঞাপন সীমা</label><input type="number" min="0" step="1" id="limit_'+x.code+'" value="'+x.daily_ad_limit+'"></div></div><label><input type="checkbox" style="width:auto" id="active_'+x.code+'" '+(x.is_active?"checked":"")+'> ইউজারদের জন্য চালু</label></div>').join("");
+ const m=await db.from("package_payment_methods").select("*").order("display_order");if(m.error)throw m.error;methods=m.data||[];
+ $("adminMethods").innerHTML=methods.map(x=>'<div class="item"><b>'+safe(x.display_name)+'</b><label>পেমেন্ট নম্বর / ব্যাংক অ্যাকাউন্ট</label><input id="account_'+x.code+'" value="'+safe(x.account_number||"")+'"><label>অ্যাকাউন্টের নাম</label><input id="holder_'+x.code+'" value="'+safe(x.account_name||"")+'"><label><input type="checkbox" style="width:auto" id="methodactive_'+x.code+'" '+(x.is_active?"checked":"")+'> চালু</label></div>').join("");
+ const q=await db.from("package_purchase_requests").select("id,user_id,package_price_bdt,payment_method,sender_number,transaction_id,status,requested_at,membership_packages(name)").order("requested_at",{ascending:false}).limit(100);if(q.error)throw q.error;
+ const pn={bkash:"বিকাশ",nagad:"নগদ",rocket:"রকেট",bank:"ব্যাংক"};
+ $("requests").innerHTML=q.data?.length?q.data.map(x=>'<div class="item"><b>'+safe(x.membership_packages?.name||"প্যাকেজ")+' · ৳'+x.package_price_bdt+'</b><p>ইউজার: '+safe(x.user_id)+'<br>পেমেন্ট: '+safe(pn[x.payment_method]||x.payment_method)+'<br>প্রেরকের নম্বর: '+safe(x.sender_number)+'<br>Transaction ID: '+safe(x.transaction_id)+'<br>অবস্থা: '+safe(x.status)+'</p>'+(x.status==="pending"?'<div class="row"><button class="btn" data-review="approved" data-id="'+x.id+'">Approve</button><button class="btn red" data-review="rejected" data-id="'+x.id+'">Reject</button></div>':'')+'</div>').join(""):"কোনো পেমেন্ট আবেদন নেই।";
+ $("requests").querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>review(b.dataset.id,b.dataset.review));
+}
+$("savePackages").onclick=async()=>{try{for(const p of packages){const price=p.code==="free"?0:Number($("price_"+p.code).value),reward=Number($("reward_"+p.code).value),limit=Number($("limit_"+p.code).value),active=$("active_"+p.code).checked;if(price<0||reward<0||limit<0)throw Error("শূন্যের নিচে মান দেওয়া যাবে না।");const {error}=await db.from("membership_packages").update({price_bdt:price,reward_per_verified_ad_bdt:reward,daily_ad_limit:limit,is_active:p.code==="free"?true:(active&&price>0),updated_at:new Date().toISOString()}).eq("id",p.id);if(error)throw error}msg("adminPkgMsg","প্যাকেজ সেটিংস সংরক্ষণ হয়েছে।");await loadAdmin()}catch(e){msg("adminPkgMsg",e.message,true)}};
+$("saveMethods").onclick=async()=>{try{for(const m of methods){const account=$("account_"+m.code).value.trim(),holder=$("holder_"+m.code).value.trim(),active=$("methodactive_"+m.code).checked;const {error}=await db.from("package_payment_methods").update({account_number:account,account_name:holder,logo_url:logos[m.code]||null,is_active:active&&account.length>=8,updated_at:new Date().toISOString()}).eq("code",m.code);if(error)throw error}msg("adminMethodMsg","পেমেন্ট সেটিংস সংরক্ষণ হয়েছে।");await loadAdmin()}catch(e){msg("adminMethodMsg",e.message,true)}};
+async function review(id,status){try{if(!confirm(status==="approved"?"পেমেন্ট সত্যি পেয়েছেন এবং প্যাকেজ চালু করবেন?":"পেমেন্ট আবেদন প্রত্যাখ্যান করবেন?"))return;const {error}=await db.rpc("admin_review_package_purchase",{p_request_id:id,p_status:status,p_note:null});if(error)throw error;msg("topmsg",status==="approved"?"পেমেন্ট অনুমোদিত; প্যাকেজ চালু হয়েছে।":"পেমেন্ট আবেদন প্রত্যাখ্যান করা হয়েছে।");await loadAdmin()}catch(e){msg("topmsg",e.message,true)}}
+boot().catch(e=>msg("topmsg",e.message,true));
+</script></body></html>

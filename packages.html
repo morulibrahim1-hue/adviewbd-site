@@ -7,8 +7,8 @@
 <div class="card"><div id="who" class="muted">লগইন যাচাই হচ্ছে…</div><div id="topmsg"></div></div>
 <section id="userArea" class="hidden">
 <div class="card"><h3>আপনার ৩০ দিনের ফ্রি ব্যবহার</h3><div id="trialStatus" class="muted">অবস্থা যাচাই হচ্ছে…</div></div>
-<div class="card"><h3>আপনার প্যাকেজ বেছে নিন</h3><p class="muted">প্যাকেজের মূল্য ও সুবিধা অ্যাডমিন নির্ধারণ করেন। বিজ্ঞাপন থেকে আয় কেবল অনুমোদিত বিজ্ঞাপন ও যাচাইকৃত ভিউয়ের ওপর নির্ভরশীল; নির্দিষ্ট লাভ নিশ্চিত নয়।</p><div id="packages" class="grid">লোড হচ্ছে…</div></div>
-<div class="card"><h3>প্যাকেজ পেমেন্ট কনফার্ম করুন</h3><div id="chosen" class="msg">আগে একটি প্যাকেজ নির্বাচন করুন।</div><label>পেমেন্ট পদ্ধতি</label><div id="methods"></div><label>যে নম্বর/অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন</label><input id="sender" placeholder="01XXXXXXXXX / ব্যাংক অ্যাকাউন্ট"><label>Transaction ID</label><input id="txid" placeholder="ট্রানজেকশন আইডি"><button id="submit" class="btn">পেমেন্ট কনফার্ম করুন</button><div id="paymsg"></div></div>
+<div class="card" id="packagePicker"><h3>আপনার পছন্দের প্যাকেজ বেছে নিন</h3><p class="muted">প্যাকেজের মূল্য ও সুবিধা অ্যাডমিন নির্ধারণ করেন। বিজ্ঞাপন থেকে আয় কেবল অনুমোদিত বিজ্ঞাপন ও যাচাইকৃত ভিউয়ের ওপর নির্ভরশীল; নির্দিষ্ট লাভ নিশ্চিত নয়।</p><div id="packages" class="grid">লোড হচ্ছে…</div></div>
+<div class="card hidden" id="paymentPanel"><button id="backPackages" class="btn alt">← প্যাকেজে ফিরে যান</button><h3>আপনার প্যাকেজের পেমেন্ট</h3><div id="chosen" class="msg"></div><p><b>১. পেমেন্ট মাধ্যম নির্বাচন করুন</b></p><div id="methods"></div><div id="selectedPayment" class="hidden"><p><b>২. এই নম্বরে টাকা পাঠান</b></p><div class="row"><strong id="accountNumber" style="font-size:20px;letter-spacing:1px"></strong><button id="copyAccount" class="btn alt" type="button" style="flex:0 0 auto">নম্বর কপি করুন</button></div><div id="accountHolder" class="muted"></div><p class="muted">উপরের নম্বরে নির্বাচিত প্যাকেজের সম্পূর্ণ টাকা Send Money করুন।</p><label>৩. যে নম্বর/অ্যাকাউন্ট থেকে টাকা পাঠিয়েছেন</label><input id="sender" placeholder="01XXXXXXXXX / ব্যাংক অ্যাকাউন্ট"><label>৪. Transaction ID</label><input id="txid" placeholder="ট্রানজেকশন আইডি"><button id="submit" class="btn">পেমেন্ট নিশ্চিত করে সাবমিট করুন</button></div><div id="paymsg"></div></div>
 <div class="card"><h3>আমার প্যাকেজ ও পেমেন্টের অবস্থা</h3><div id="myrequests">লোড হচ্ছে…</div></div>
 </section>
 
@@ -28,16 +28,35 @@ async function loadUser(){
  user=session.user;$("who").textContent=(user.user_metadata?.display_name||user.phone||user.email||"ইউজার")+" · User";
  $("userArea").classList.remove("hidden");await loadUserArea();
 }
+function openPayment(packageId){
+ selected=packages.find(x=>x.id===packageId);if(!selected)return;
+ $("chosen").textContent=selected.name+" · মোট মূল্য ৳"+Number(selected.price_bdt).toLocaleString("bn-BD");
+ $("packagePicker").classList.add("hidden");$("paymentPanel").classList.remove("hidden");$("paymsg").innerHTML="";
+ $("sender").value="";$("txid").value="";
+ if(methods.length){const first=$("methods").querySelector('input[name="method"]');if(first)first.checked=true;showSelectedMethod()}
+ $("paymentPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function showSelectedMethod(){
+ const code=document.querySelector('input[name="method"]:checked')?.value,method=methods.find(x=>x.code===code);
+ if(!method){$("selectedPayment").classList.add("hidden");return}
+ $("accountNumber").textContent=method.account_number||"";
+ $("accountHolder").textContent=method.account_name?"অ্যাকাউন্টের নাম: "+method.account_name:"";
+ $("selectedPayment").classList.remove("hidden");
+}
+$("backPackages").onclick=()=>{$("paymentPanel").classList.add("hidden");$("packagePicker").classList.remove("hidden");$("packagePicker").scrollIntoView({behavior:"smooth",block:"start"})};
+$("copyAccount").onclick=async()=>{const value=$("accountNumber").textContent;if(!value)return;try{await navigator.clipboard.writeText(value);$("copyAccount").textContent="কপি হয়েছে ✓";setTimeout(()=>$("copyAccount").textContent="নম্বর কপি করুন",1800)}catch(e){const t=document.createElement("textarea");t.value=value;document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();$("copyAccount").textContent=ok?"কপি হয়েছে ✓":"কপি হয়নি";}};
 async function loadUserArea(){
  const {data:profile,error:pe}=await db.from("profiles").select("free_trial_started_at").eq("id",user.id).maybeSingle();if(pe)throw pe;
  const {data:subs,error:se}=await db.from("user_package_subscriptions").select("status,activated_at,expires_at,membership_packages(code,name)").eq("user_id",user.id).order("activated_at",{ascending:false}).limit(20);if(se)throw se;
  const now=Date.now(),trial=(subs||[]).find(x=>(Array.isArray(x.membership_packages)?x.membership_packages[0]:x.membership_packages)?.code==="free"),activeTrial=trial&&trial.status==="active"&&(!trial.expires_at||new Date(trial.expires_at).getTime()>now);
  $("trialStatus").innerHTML=activeTrial?("ফ্রি প্যাকেজ চালু আছে।<br>শুরু: "+safe(new Date(trial.activated_at).toLocaleString("bn-BD"))+"<br>মেয়াদ শেষ: "+safe(new Date(trial.expires_at).toLocaleString("bn-BD"))):"আপনার ৩০ দিনের ফ্রি প্যাকেজের মেয়াদ শেষ হয়েছে। এখন প্যাকেজ কিনে ব্যবহার চালিয়ে যান।";
  const p=await db.from("membership_packages").select("*").eq("is_active",true).gt("price_bdt",0).order("display_order");if(p.error)throw p.error;packages=p.data||[];
- $("packages").innerHTML=packages.length?packages.map(x=>'<div class="package"><h3>'+safe(x.name)+'</h3><b>৳'+Number(x.price_bdt).toFixed(2)+'</b><p class="muted">যাচাইকৃত বিজ্ঞাপনপ্রতি ৳'+Number(x.reward_per_verified_ad_bdt).toFixed(2)+'<br>দৈনিক বিজ্ঞাপন সীমা: '+x.daily_ad_limit+'</p><button class="btn" data-pkg="'+x.id+'">এই প্যাকেজ নিন</button></div>').join(""):"এখনো কোনো প্যাকেজ কেনার জন্য চালু করা হয়নি।";
- $("packages").querySelectorAll("[data-pkg]").forEach(b=>b.onclick=()=>{selected=packages.find(x=>x.id===b.dataset.pkg);$("chosen").textContent=selected.name+" · ৳"+Number(selected.price_bdt).toFixed(2)});
+ $("packages").innerHTML=packages.length?packages.map(x=>'<div class="package"><h3>'+safe(x.name)+'</h3><b>৳'+Number(x.price_bdt).toFixed(2)+'</b><p class="muted">যাচাইকৃত বিজ্ঞাপনপ্রতি ৳'+Number(x.reward_per_verified_ad_bdt).toFixed(2)+'<br>দৈনিক বিজ্ঞাপন সীমা: '+x.daily_ad_limit+'</p><button class="btn" data-pkg="'+x.id+'">কিনুন · Buy Now</button></div>').join(""):"এখনো কোনো প্যাকেজ কেনার জন্য চালু করা হয়নি।";
+ $("packages").querySelectorAll("[data-pkg]").forEach(b=>b.onclick=()=>openPayment(b.dataset.pkg));
  const m=await db.from("package_payment_methods").select("*").eq("is_active",true).not("account_number","is",null).order("display_order");if(m.error)throw m.error;methods=m.data||[];
- $("methods").innerHTML=methods.map((x,i)=>'<label class="pay"><input type="radio" name="method" value="'+x.code+'" '+(i===0?"checked":"")+'><img class="logo" src="'+safe(x.logo_url||logos[x.code])+'" alt="'+safe(names[x.code])+'"><span><b>'+safe(x.display_name)+'</b><br><span class="muted">'+safe(x.account_number)+'</span></span></label>').join("")||"পেমেন্ট পদ্ধতি এখনো চালু হয়নি।";
+ $("methods").innerHTML=methods.map((x,i)=>'<label class="pay"><input type="radio" name="method" value="'+x.code+'" '+(i===0?"checked":"")+'><img class="logo" src="'+safe(x.logo_url||logos[x.code])+'" alt="'+safe(names[x.code])+'"><span><b>'+safe(names[x.code]||x.display_name)+'</b></span></label>').join("")||"পেমেন্ট পদ্ধতি এখনো চালু হয়নি।";
+ $("methods").querySelectorAll('input[name="method"]').forEach(r=>r.onchange=showSelectedMethod);
+ if(methods.length)showSelectedMethod();
  const r=await db.from("package_purchase_requests").select("id,package_price_bdt,payment_method,sender_number,transaction_id,status,requested_at,admin_note,membership_packages(name)").eq("user_id",user.id).order("requested_at",{ascending:false});if(r.error)throw r.error;
  $("myrequests").innerHTML=r.data?.length?r.data.map(x=>'<div class="item"><b>'+safe(x.membership_packages?.name||"প্যাকেজ")+'</b> · ৳'+x.package_price_bdt+'<p>'+safe(names[x.payment_method]||x.payment_method)+' · '+safe(x.transaction_id)+' · '+safe(x.sender_number)+'</p><span class="pill">'+({pending:"যাচাই অপেক্ষমাণ",approved:"অনুমোদিত",rejected:"প্রত্যাখ্যাত"}[x.status]||x.status)+'</span> '+safe(x.admin_note||"")+'</div>').join(""):"কোনো পেমেন্ট আবেদন নেই।";
 }

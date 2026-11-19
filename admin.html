@@ -51,7 +51,7 @@ const config={
  companies:{title:'বিজ্ঞাপনদাতা যাচাই',cols:['name','contact_email','contact_phone','verification_status'],actions:[['approved','অনুমোদন'],['rejected','বাতিল'],['suspended','স্থগিত']],rpc:'admin_review_company',id:'p_company_id'},
  campaigns:{title:'ক্যাম্পেইন ব্যবস্থাপনা',cols:['title','company_id','status','total_budget_bdt','contracted_views'],actions:[['approved','অনুমোদন'],['active','চালু'],['paused','বিরতি'],['rejected','বাতিল']],rpc:'admin_review_campaign',id:'p_campaign_id'},
  ads:{title:'বিজ্ঞাপন ব্যবস্থাপনা',cols:['title','campaign_id','duration_seconds','is_active','media_url'],actions:[['true','চালু'],['false','বন্ধ']],},
- profiles:{title:'ব্যবহারকারী তালিকা',cols:['id','display_name','account_type','created_at']},
+ profiles:{title:'ব্যবহারকারী তালিকা ও ফ্রি ট্রায়াল',cols:['id','display_name','account_type','created_at','free_trial_started_at']},
  withdrawal_requests:{title:'উত্তোলন অনুরোধ',cols:['user_id','amount_bdt','payout_method','payout_account','status','requested_at'],actions:[['processing','প্রক্রিয়াধীন'],['paid','পরিশোধিত'],['rejected','প্রত্যাখ্যান']],rpc:'admin_review_withdrawal',id:'p_request_id'},
  ad_events:{title:'বিজ্ঞাপন ভিউ যাচাই',cols:['viewer_id','ad_id','campaign_id','event_type','watched_seconds','verification_status','event_at']},
  campaign_daily_reports:{title:'দৈনিক রিপোর্ট',cols:['campaign_id','report_date','starts_count','completed_count','verified_views','suspicious_count','rejected_count']},

@@ -11,8 +11,7 @@
 <div class="card"><h3>আমার প্যাকেজ ও পেমেন্টের অবস্থা</h3><div id="myrequests">লোড হচ্ছে…</div></div>
 <div class="card"><h3>আপনার ৩০ দিনের ফ্রি ব্যবহার</h3><div id="trialStatus" class="muted">অবস্থা যাচাই হচ্ছে…</div></div>
 
-<div class="card"><h3>আপনার User ID</h3><div class="row"><strong id="publicUserId">লোড হচ্ছে…</strong><button id="copyPublicUserId" class="btn alt" type="button">কপি করুন</button></div></div>
-<div class="card"><h3>লাইভ সাপোর্ট</h3><p class="muted">পেমেন্ট বা প্যাকেজ সমস্যা হলে এখানে মেসেজ দিন। User ID স্বয়ংক্রিয়ভাবে যুক্ত থাকবে।</p><div id="supportThread" class="item" style="max-height:260px;overflow:auto">সাপোর্ট লোড হচ্ছে…</div><textarea id="supportText" rows="3" maxlength="4000" placeholder="আপনার সমস্যাটি লিখুন…"></textarea><button id="sendSupport" class="btn">মেসেজ পাঠান</button><div id="supportMsg" class="muted"></div></div>
+<div class="card"><h3>লাইভ সাপোর্ট</h3><p class="muted">পেমেন্ট বা প্যাকেজ সমস্যা হলে এখানে মেসেজ দিন। আপনার অ্যাকাউন্ট থেকেই সাপোর্টে মেসেজ পাঠানো হবে।</p><div id="supportThread" class="item" style="max-height:260px;overflow:auto">সাপোর্ট লোড হচ্ছে…</div><textarea id="supportText" rows="3" maxlength="4000" placeholder="আপনার সমস্যাটি লিখুন…"></textarea><button id="sendSupport" class="btn">মেসেজ পাঠান</button><div id="supportMsg" class="muted"></div></div>
 
 </section>
 
@@ -38,7 +37,6 @@ async function loadMySupport(){
  try{const {data,error}=await db.from("support_conversations").select("id").eq("user_id",user.id).order("updated_at",{ascending:false}).limit(1);if(error)throw error;supportConversationId=data?.[0]?.id||null;if(!supportConversationId){$("supportThread").textContent="এখনো কোনো সাপোর্ট মেসেজ নেই।";return}await renderMySupport();if(supportChannel)db.removeChannel(supportChannel);supportChannel=db.channel("package-support-"+supportConversationId).on("postgres_changes",{event:"*",schema:"public",table:"support_messages",filter:"conversation_id=eq."+supportConversationId},()=>renderMySupport()).subscribe()}catch(e){$("supportThread").textContent="সাপোর্ট লোড হয়নি: "+e.message}
 }
 async function renderMySupport(){const {data,error}=await db.from("support_messages").select("sender_role,message,created_at").eq("conversation_id",supportConversationId).order("created_at");if(error)throw error;$("supportThread").innerHTML=data?.length?data.map(m=>'<div class="msg"><b>'+(m.sender_role==="admin"?"AdView BD Support":"আপনি")+'</b><br>'+safe(m.message)+'<div class="muted">'+safe(new Date(m.created_at).toLocaleString("bn-BD"))+'</div></div>').join(""):"মেসেজ লিখে পাঠান।";$("supportThread").scrollTop=$("supportThread").scrollHeight}
-$("copyPublicUserId").onclick=async()=>{const v=$("publicUserId").textContent;try{await navigator.clipboard.writeText(v);$("copyPublicUserId").textContent="কপি হয়েছে ✓"}catch(e){$("copyPublicUserId").textContent="কপি হয়নি"}};
 $("sendSupport").onclick=async()=>{try{const message=$("supportText").value.trim();if(!message)throw Error("আপনার সমস্যা লিখুন।");$("sendSupport").disabled=true;if(!supportConversationId){const {data,error}=await db.from("support_conversations").insert({user_id:user.id,subject:"প্যাকেজ/পেমেন্ট সহায়তা"}).select("id").single();if(error)throw error;supportConversationId=data.id}const {error}=await db.from("support_messages").insert({conversation_id:supportConversationId,sender_id:user.id,sender_role:"user",message});if(error)throw error;$("supportText").value="";$("supportMsg").textContent="সাপোর্টে মেসেজ পাঠানো হয়েছে।";await renderMySupport()}catch(e){$("supportMsg").textContent="মেসেজ পাঠানো যায়নি: "+e.message}finally{$("sendSupport").disabled=false}};
 function openPayment(packageId){
  selected=packages.find(x=>x.id===packageId);if(!selected)return;
@@ -58,7 +56,7 @@ function showSelectedMethod(){
 $("backPackages").onclick=()=>{$("paymentPanel").classList.add("hidden");$("packagePicker").classList.remove("hidden");$("packagePicker").scrollIntoView({behavior:"smooth",block:"start"})};
 $("copyAccount").onclick=async()=>{const value=$("accountNumber").textContent;if(!value)return;try{await navigator.clipboard.writeText(value);$("copyAccount").textContent="কপি হয়েছে ✓";setTimeout(()=>$("copyAccount").textContent="নম্বর কপি করুন",1800)}catch(e){const t=document.createElement("textarea");t.value=value;document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();$("copyAccount").textContent=ok?"কপি হয়েছে ✓":"কপি হয়নি";}};
 async function loadUserArea(){
- const {data:pid}=await db.rpc("get_my_adview_public_id");$("publicUserId").textContent=pid||"—";await loadMySupport();
+ await loadMySupport();
  const {data:profile,error:pe}=await db.from("profiles").select("free_trial_started_at").eq("id",user.id).maybeSingle();if(pe)throw pe;
  const {data:subs,error:se}=await db.from("user_package_subscriptions").select("status,activated_at,expires_at,membership_packages(code,name)").eq("user_id",user.id).order("activated_at",{ascending:false}).limit(20);if(se)throw se;
  const now=Date.now(),trial=(subs||[]).find(x=>(Array.isArray(x.membership_packages)?x.membership_packages[0]:x.membership_packages)?.code==="free"),activeTrial=trial&&trial.status==="active"&&(!trial.expires_at||new Date(trial.expires_at).getTime()>now);

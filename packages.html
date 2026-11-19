@@ -24,12 +24,14 @@ const db=createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}}
 const $=id=>document.getElementById(id),safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const logos={bkash:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/bkash.png",nagad:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/nagad.png",rocket:"https://raw.githubusercontent.com/mdmubarokhosin/Bd-MFS-Logo/refs/heads/main/logos/png/rocket.png",bank:"https://commons.wikimedia.org/wiki/Special:FilePath/Dutch-bangla-bank-ltd.svg"};
 const names={bkash:"বিকাশ",nagad:"নগদ",rocket:"রকেট",bank:"ডাচ্-বাংলা ব্যাংক"};
-let user=null,selected=null,packages=[],methods=[];
+let user=null,selected=null,packages=[],methods=[],purchaseChannel=null;
 function msg(id,t,bad=false){$(id).innerHTML='<div class="msg '+(bad?'err':'')+'">'+safe(t)+'</div>'}
 async function loadUser(){
  const {data:{session}}=await db.auth.getSession();if(!session){$("who").textContent="প্রথমে মূল অ্যাপে লগইন করুন, তারপর এই পেজ খুলুন।";return}
  user=session.user;$("who").textContent=(user.user_metadata?.display_name||user.phone||user.email||"ইউজার")+" · User";
  $("userArea").classList.remove("hidden");await loadUserArea();
+ if(purchaseChannel)db.removeChannel(purchaseChannel);
+ purchaseChannel=db.channel("package-purchase-status-"+user.id).on("postgres_changes",{event:"*",schema:"public",table:"package_purchase_requests",filter:"user_id=eq."+user.id},()=>loadUserArea()).subscribe();
 }
 
 let supportConversationId=null,supportChannel=null;

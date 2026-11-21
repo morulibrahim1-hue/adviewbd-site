@@ -8,7 +8,7 @@
 <div id="loginForm"><label>Gmail / ইমেইল অথবা মোবাইল নম্বর</label><input id="phone" type="text" autocomplete="username" placeholder="Gmail অথবা 01XXXXXXXXX"><label>পাসওয়ার্ড</label><input id="password" type="password" autocomplete="current-password" placeholder="আপনার পাসওয়ার্ড"><button class="btn" id="loginBtn">লগইন করুন</button></div>
 <div id="signupForm" class="hidden"><label>নাম</label><input id="name" placeholder="আপনার নাম"><label>Gmail / ইমেইল অথবা মোবাইল নম্বর</label><input id="newPhone" type="text" autocomplete="username" placeholder="Gmail অথবা 01XXXXXXXXX"><label>পাসওয়ার্ড</label><input id="newPassword" type="password" autocomplete="new-password" placeholder="কমপক্ষে ৮ অক্ষর"><button class="btn" id="signupBtn">অ্যাকাউন্ট খুলুন</button><div id="phoneOtpPanel" class="hidden"><label>SMS OTP কোড</label><input id="phoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="মোবাইলে পাওয়া কোড লিখুন"><div class="row"><button class="btn" id="verifyPhoneOtp" type="button">OTP যাচাই করুন</button><button class="btn secondary" id="resendPhoneOtp" type="button">আবার কোড পাঠান</button></div><div id="phoneOtpMsg"></div></div><p class="hint">Gmail দিয়ে খুললে ইমেইল নিশ্চিতকরণ লাগতে পারে; ফোন দিয়ে খুললে SMS OTP দিয়ে নম্বর নিশ্চিত করতে হবে।</p></div><div id="authMsg"></div></section>
 <section id="app" class="hidden"><div class="card row"><div><b id="who"></b><div class="muted" id="roleText"></div></div><button class="btn secondary" id="logout">লগআউট</button></div>
-<div class="tabs" id="nav"><button data-user-page="packages" class="active">প্যাকেজ</button><button data-user-page="withdraw">উত্তোলন</button><button data-user-page="id">আমার ID</button><button data-user-page="support">লাইভ সাপোর্ট</button><button data-user-page="more">অন্যান্য</button></div>
+<div class="tabs" id="nav"><button data-user-page="packages" class="active">প্যাকেজ</button><button data-user-page="ads">বিজ্ঞাপন দেখুন</button><button data-user-page="withdraw">উত্তোলন</button><button data-user-page="id">আমার ID</button><button data-user-page="support">লাইভ সাপোর্ট</button><button data-user-page="more">অন্যান্য</button></div>
 <section id="viewerPage">
 <div class="card"><h2>আপনার অ্যাকাউন্ট</h2><div class="row"><div><span class="hint">আপনার User ID</span><h2 id="publicUserId">লোড হচ্ছে…</h2></div><button class="btn secondary" id="copyPublicUserId" type="button">ID কপি করুন</button></div><div class="hint">সাপোর্টে যোগাযোগের সময় এই ID বলবেন।</div></div>
 <div class="card" id="supportCard"><h2>লাইভ সাপোর্ট</h2><p class="hint">পেমেন্ট, প্যাকেজ বা অ্যাকাউন্টের সমস্যা হলে এখানে লিখুন। আপনার User ID স্বয়ংক্রিয়ভাবে যুক্ত হবে।</p><div id="supportThread" class="ad" style="max-height:300px;overflow:auto">সাপোর্ট লোড হচ্ছে…</div><textarea id="supportText" rows="3" maxlength="4000" placeholder="আপনার সমস্যাটি লিখুন…"></textarea><button class="btn" id="sendSupport">মেসেজ পাঠান</button><div id="supportMsg" class="hint"></div></div>
@@ -66,7 +66,8 @@ function setupUserPages(){
   {id:"withdraw",title:"ব্যালেন্স ও টাকা উত্তোলন",items:[walletCard,withdrawCard,transactionCard]},
   {id:"id",title:"আপনার User ID",items:[idCard]},
   {id:"support",title:"লাইভ সাপোর্ট",items:[supportCard]},
-  {id:"more",title:"অন্যান্য তথ্য ও বিজ্ঞাপন",items:[referralCard,adsCard]}
+  {id:"more",title:"অন্যান্য তথ্য",items:[referralCard]},
+  {id:"ads",title:"বিজ্ঞাপন দেখুন",items:[adsCard]}
  ];
  const used=new Set(groups.flatMap(g=>g.items.filter(Boolean)));
  groups[4].items.push(...cards.filter(c=>!used.has(c)));

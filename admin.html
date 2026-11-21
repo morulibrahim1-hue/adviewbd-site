@@ -136,6 +136,6 @@ adminCheck();
 
 </script>
 <script>
-(()=>{const current=document.querySelector('meta[name="adview-admin-build"]')?.content;if(!current)return;let checking=false;async function checkForAdminUpdate(){if(checking||document.visibilityState==='hidden')return;checking=true;try{const response=await fetch(location.href,{cache:'no-store',credentials:'same-origin'});if(response.ok){const html=await response.text();const match=html.match(/<meta\\s+name=["']adview-admin-build["']\\s+content=["']([^"']+)["']/i);if(match&&match[1]!==current){location.reload()}}}catch(e){}finally{checking=false}}document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkForAdminUpdate()});window.addEventListener('pageshow',checkForAdminUpdate);setInterval(checkForAdminUpdate,90000)})();
+(()=>{const current=document.querySelector('meta[name="adview-admin-build"]')?.content;if(!current)return;let checking=false;async function checkForAdminUpdate(){if(checking||document.visibilityState==='hidden')return;checking=true;try{const response=await fetch(location.href,{cache:'no-store',credentials:'same-origin'});if(response.ok){const html=await response.text();const match=html.match(/<meta name="adview-admin-build" content="([^"]+)"/i);if(match&&match[1]!==current){location.reload()}}}catch(e){}finally{checking=false}}document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkForAdminUpdate()});window.addEventListener('pageshow',checkForAdminUpdate);setInterval(checkForAdminUpdate,90000)})();
 </script>
 </body></html>

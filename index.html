@@ -150,6 +150,7 @@ async function loadViewer(){
    const close=document.createElement("button");close.className="btn danger";close.textContent="বন্ধ করুন";close.onclick=()=>overlay.remove();panel.prepend(close);
    overlay.append(panel);overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};document.body.append(overlay);
   });
+ }catch(e){$("ads").textContent="তথ্য লোড হয়নি: "+e.message}
  }
  async function loadMySupport(){
  try{

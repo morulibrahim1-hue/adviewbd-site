@@ -94,7 +94,7 @@ function setupUserPages(){
  root.dataset.pagesReady="yes";
  showUserPage("packages");
 }
-async function boot(){if(!session||!user)return;$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("who").textContent=user.user_metadata?.display_name||user.phone||user.email||"ব্যবহারকারী";$("roleText").textContent=user.app_metadata?.role==="admin"?"অ্যাডমিন": "সাধারণ ব্যবহারকারী";setupUserPages();await Promise.all([loadViewer(),loadMySupport()])}
+async function boot(){if(!session||!user)return;$("auth").classList.add("hidden");$("app").classList.remove("hidden");$("who").textContent=user.user_metadata?.display_name||user.phone||user.email||"ব্যবহারকারী";$("roleText").textContent=user.app_metadata?.role==="admin"?"অ্যাডমিন": "সাধারণ ব্যবহারকারী";setupUserPages();setupAdsRealtime();await Promise.all([loadViewer(),loadMySupport()])}
 async function loadReferral(){try{const [profileResult,countResult]=await Promise.all([db.from("profiles").select("referral_code").eq("id",user.id).single(),db.rpc("get_my_referral_count")]);const {data:p,error}=profileResult;if(error)throw error;const {data:count,error:ce}=countResult;if(ce)throw ce;const code=p.referral_code||"";const link=URL+"/functions/v1/adview-portal?ref="+encodeURIComponent(code);$("myReferralCode").textContent=code;$("myReferralLink").value=link;$("referralCount").textContent=String(count||0)}catch(e){$("referralMsg").textContent="রেফারেল তথ্য লোড হয়নি: "+e.message}}
 $("shareReferral").onclick=async()=>{const link=$("myReferralLink").value;if(!link)return;try{if(navigator.share){await navigator.share({title:"AdView BD",text:"AdView BD-তে যোগ দিন",url:link})}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(link);$("referralMsg").textContent="রেফারেল লিংক কপি হয়েছে।"}else{$("myReferralLink").focus();$("myReferralLink").select();$("referralMsg").textContent="লিংকটি কপি করুন।"}}catch(e){if(e.name!=="AbortError")$("referralMsg").textContent="শেয়ার করা যায়নি: "+e.message}};
 async function loadHomePackages(){
@@ -112,27 +112,14 @@ async function loadHomePackages(){
   else if((subs||[]).some(x=>x.expires_at&&new Date(x.expires_at).getTime()<=now))msg("homePackageMsg","আপনার ফ্রি প্যাকেজের ৩০ দিন শেষ হয়েছে। আবার ব্যবহার করতে প্যাকেজ কিনুন।");
  }catch(e){box.textContent="প্যাকেজ লোড হয়নি: "+e.message}
 }
-async function loadViewer(){
+async function loadAds(){
+ const box=$("ads"),button=$("refreshAds");
+ if(button){button.disabled=true;button.textContent="লোড হচ্ছে…"}
  try{
-  const [pidR,packagesR,subsR,profileR,refCountR,walletR,adsR,txR]=await Promise.all([
-   db.rpc("get_my_adview_public_id"),
-   db.from("membership_packages").select("id,code,name,price_bdt,reward_per_verified_ad_bdt,daily_ad_limit,is_active,display_order").order("display_order"),
-   db.from("user_package_subscriptions").select("id,status,activated_at,expires_at,membership_packages(code,name)").eq("user_id",user.id).eq("status","active").order("activated_at",{ascending:false}).limit(10),
-   db.from("profiles").select("referral_code").eq("id",user.id).single(),
-   db.rpc("get_my_referral_count"),
-   db.from("wallet_accounts").select("available_balance_bdt,pending_balance_bdt").eq("user_id",user.id).maybeSingle(),
-   db.from("ads").select("id,title,media_url,text_content,cta_label,ad_type,placement,reward_enabled,destination_url,duration_seconds,campaign_id,campaigns!inner(title,reward_per_view_bdt,status,starts_at,ends_at,companies!inner(verification_status))").eq("is_active",true).eq("campaigns.status","active").eq("campaigns.companies.verification_status","approved").order("created_at",{ascending:false}),
-   db.from("wallet_transactions").select("transaction_type,amount_bdt,status,description,created_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(15)
-  ]);
-  $("publicUserId").textContent=pidR.data||"—";
-  const rows=packagesR.data||[],subs=subsR.data||[],now=Date.now(),valid=subs.filter(x=>!x.expires_at||new Date(x.expires_at).getTime()>now),current=valid[0],currentPkg=Array.isArray(current?.membership_packages)?current.membership_packages[0]:current?.membership_packages,trial=valid.find(x=>(Array.isArray(x.membership_packages)?x.membership_packages[0]:x.membership_packages)?.code==="free");
-  $("homePackages").innerHTML=rows.map(p=>{const free=p.code==="free",active=currentPkg?.code===p.code,price=Number(p.price_bdt),status=free?(trial?'<span class="pill">৩০ দিনের ফ্রি ট্রায়াল চালু</span>':'<span class="pill">ফ্রি ট্রায়াল শেষ / প্যাকেজ কিনুন</span>'):(active?'<span class="pill">আপনার বর্তমান প্যাকেজ</span>':(!p.is_active?'<span class="pill">এখনো চালু হয়নি</span>':(price>0?'<a class="btn" href="./packages.html?package='+encodeURIComponent(p.id)+'" style="display:inline-block;text-decoration:none">পেমেন্ট করুন</a>':'<span class="pill">দাম নির্ধারণাধীন</span>')));return '<div class="ad"><h3>'+safe(p.name)+'</h3><b>'+(free?"প্রথম ৩০ দিন ফ্রি":(price>0?"৳"+price.toFixed(2):"দাম নির্ধারণাধীন"))+'</b><p class="hint">'+(free?"নতুন অ্যাকাউন্টের দিন থেকে একটানা ৩০ দিন ব্যবহার করা যাবে।":"যাচাইকৃত বিজ্ঞাপনপ্রতি সর্বোচ্চ "+money(p.reward_per_verified_ad_bdt))+'<br>দৈনিক বিজ্ঞাপন সীমা: '+p.daily_ad_limit+'</p>'+status+'</div>'}).join("")||"প্যাকেজ এখনো চালু নেই。";
-  if(trial?.expires_at)msg("homePackageMsg","আপনার ৩০ দিনের ফ্রি ব্যবহার চালু আছে। শেষ হবে: "+new Date(trial.expires_at).toLocaleString("bn-BD"));else if(subs.some(x=>x.expires_at&&new Date(x.expires_at).getTime()<=now))msg("homePackageMsg","আপনার ফ্রি প্যাকেজের ৩০ দিন শেষ হয়েছে। আবার ব্যবহার করতে প্যাকেজ কিনুন।");
-  const profile=profileR.data;if(profileR.error)throw profileR.error;const code=profile?.referral_code||"";$("myReferralCode").textContent=code;$("myReferralLink").value=URL+"/functions/v1/adview-portal?ref="+encodeURIComponent(code);if(refCountR.error)throw refCountR.error;$("referralCount").textContent=String(refCountR.data||0);
-  $("available").textContent=money(walletR.data?.available_balance_bdt);$("pending").textContent=money(walletR.data?.pending_balance_bdt);
-  if(adsR.error)throw adsR.error;
-  const ads=adsR.data||[],videoTypes=["video","rewarded_video"];
-  $("ads").innerHTML=ads.length?ads.map(x=>{
+  const {data:ads,error}=await db.from("ads").select("id,title,media_url,text_content,cta_label,ad_type,placement,reward_enabled,destination_url,duration_seconds,campaign_id,campaigns!inner(title,reward_per_view_bdt,status,starts_at,ends_at,companies!inner(verification_status))").eq("is_active",true).eq("campaigns.status","active").eq("campaigns.companies.verification_status","approved").order("created_at",{ascending:false});
+  if(error)throw error;
+  const rows=ads||[],videoTypes=["video","rewarded_video"];
+  box.innerHTML=rows.length?rows.map(x=>{
    const t=x.ad_type||"video",video=videoTypes.includes(t),isText=t==="text";
    const media=isText?"":(video?'<video controls playsinline preload="none" src="'+safe(x.media_url)+'"></video>':'<img loading="lazy" decoding="async" src="'+safe(x.media_url)+'" alt="বিজ্ঞাপন">');
    const body=isText?'<p>'+safe(x.text_content||"")+'</p>':media+(x.text_content?'<p>'+safe(x.text_content)+'</p>':"");
@@ -142,15 +129,44 @@ async function loadViewer(){
    const action=t==="interstitial"?'<button class="btn" data-interstitial="1">ফুলস্ক্রিন বিজ্ঞাপন খুলুন</button>':(reward?'<button class="btn" data-watch="'+x.id+'" data-duration="'+x.duration_seconds+'">ভিডিও দেখুন ও রিওয়ার্ড নিন</button>':"");
    return '<article class="ad '+(t==="interstitial"?"interstitial-ad":"")+'"><span class="pill">'+safe(t.replaceAll("_"," "))+'</span><h3>'+safe(x.title)+'</h3><p class="muted">'+safe(x.campaigns?.title)+'</p>'+body+'<div class="actions">'+action+link+'</div>'+(reward?'<p class="hint">যাচাইকৃত ভিডিও সম্পন্ন হলে প্যাকেজ অনুযায়ী রিওয়ার্ড যোগ হবে।</p>':"")+'</article>';
   }).join(""):"এখন কোনো সক্রিয় বিজ্ঞাপন নেই।";
-  $("ads").querySelectorAll("[data-watch]").forEach(b=>b.onclick=()=>watch(b.dataset.watch,Number(b.dataset.duration),b));
-  $("ads").querySelectorAll("[data-interstitial]").forEach(b=>b.onclick=()=>{
+  box.querySelectorAll("[data-watch]").forEach(b=>b.onclick=()=>watch(b.dataset.watch,Number(b.dataset.duration),b));
+  box.querySelectorAll("[data-interstitial]").forEach(b=>b.onclick=()=>{
    const card=b.closest(".ad"),overlay=document.createElement("div"),panel=document.createElement("div");
    overlay.className="ad-interstitial-overlay";panel.className="ad-interstitial-panel";panel.innerHTML=card.innerHTML;
    panel.querySelectorAll("[data-interstitial]").forEach(x=>x.remove());
    const close=document.createElement("button");close.className="btn danger";close.textContent="বন্ধ করুন";close.onclick=()=>overlay.remove();panel.prepend(close);
    overlay.append(panel);overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};document.body.append(overlay);
   });
- }catch(e){$("ads").textContent="তথ্য লোড হয়নি: "+e.message}
+ }catch(e){box.textContent="বিজ্ঞাপন লোড হয়নি: "+e.message}
+ finally{if(button){button.disabled=false;button.textContent="রিফ্রেশ"}}
+}
+let adsRealtimeChannel=null;
+function setupAdsRealtime(){
+ if(adsRealtimeChannel)db.removeChannel(adsRealtimeChannel);
+ adsRealtimeChannel=db.channel("user-ads-live-"+user.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"ads"},()=>loadAds())
+  .on("postgres_changes",{event:"*",schema:"public",table:"campaigns"},()=>loadAds())
+  .subscribe();
+}
+async function loadViewer(){
+ await loadAds();
+ try{
+  const [pidR,packagesR,subsR,profileR,refCountR,walletR,txR]=await Promise.all([
+   db.rpc("get_my_adview_public_id"),
+   db.from("membership_packages").select("id,code,name,price_bdt,reward_per_verified_ad_bdt,daily_ad_limit,is_active,display_order").order("display_order"),
+   db.from("user_package_subscriptions").select("id,status,activated_at,expires_at,membership_packages(code,name)").eq("user_id",user.id).eq("status","active").order("activated_at",{ascending:false}).limit(10),
+   db.from("profiles").select("referral_code").eq("id",user.id).single(),
+   db.rpc("get_my_referral_count"),
+   db.from("wallet_accounts").select("available_balance_bdt,pending_balance_bdt").eq("user_id",user.id).maybeSingle(),
+   db.from("wallet_transactions").select("transaction_type,amount_bdt,status,description,created_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(15)
+  ]);
+  $("publicUserId").textContent=pidR.data||"—";
+  const rows=packagesR.data||[],subs=subsR.data||[],now=Date.now(),valid=subs.filter(x=>!x.expires_at||new Date(x.expires_at).getTime()>now),current=valid[0],currentPkg=Array.isArray(current?.membership_packages)?current.membership_packages[0]:current?.membership_packages,trial=valid.find(x=>(Array.isArray(x.membership_packages)?x.membership_packages[0]:x.membership_packages)?.code==="free");
+  $("homePackages").innerHTML=rows.map(p=>{const free=p.code==="free",active=currentPkg?.code===p.code,price=Number(p.price_bdt),status=free?(trial?'<span class="pill">৩০ দিনের ফ্রি ট্রায়াল চালু</span>':'<span class="pill">ফ্রি ট্রায়াল শেষ / প্যাকেজ কিনুন</span>'):(active?'<span class="pill">আপনার বর্তমান প্যাকেজ</span>':(!p.is_active?'<span class="pill">এখনো চালু হয়নি</span>':(price>0?'<a class="btn" href="./packages.html?package='+encodeURIComponent(p.id)+'" style="display:inline-block;text-decoration:none">পেমেন্ট করুন</a>':'<span class="pill">দাম নির্ধারণাধীন</span>')));return '<div class="ad"><h3>'+safe(p.name)+'</h3><b>'+(free?"প্রথম ৩০ দিন ফ্রি":(price>0?"৳"+price.toFixed(2):"দাম নির্ধারণাধীন"))+'</b><p class="hint">'+(free?"নতুন অ্যাকাউন্টের দিন থেকে একটানা ৩০ দিন ব্যবহার করা যাবে।":"যাচাইকৃত বিজ্ঞাপনপ্রতি সর্বোচ্চ "+money(p.reward_per_verified_ad_bdt))+'<br>দৈনিক বিজ্ঞাপন সীমা: '+p.daily_ad_limit+'</p>'+status+'</div>'}).join("")||"প্যাকেজ এখনো চালু নেই。";
+  if(trial?.expires_at)msg("homePackageMsg","আপনার ৩০ দিনের ফ্রি ব্যবহার চালু আছে। শেষ হবে: "+new Date(trial.expires_at).toLocaleString("bn-BD"));else if(subs.some(x=>x.expires_at&&new Date(x.expires_at).getTime()<=now))msg("homePackageMsg","আপনার ফ্রি প্যাকেজের ৩০ দিন শেষ হয়েছে। আবার ব্যবহার করতে প্যাকেজ কিনুন।");
+  const profile=profileR.data;if(profileR.error)throw profileR.error;const code=profile?.referral_code||"";$("myReferralCode").textContent=code;$("myReferralLink").value=URL+"/functions/v1/adview-portal?ref="+encodeURIComponent(code);if(refCountR.error)throw refCountR.error;$("referralCount").textContent=String(refCountR.data||0);
+  $("available").textContent=money(walletR.data?.available_balance_bdt);$("pending").textContent=money(walletR.data?.pending_balance_bdt);
+}catch(e){$("ads").textContent="তথ্য লোড হয়নি: "+e.message}
  }
  async function loadMySupport(){
  try{
@@ -181,7 +197,7 @@ $("sendSupport").onclick=async()=>{
  finally{$("sendSupport").disabled=false}
 };
 async function watch(adId,duration,button){try{button.disabled=true;const s=await fn("ad-view",{action:"start",ad_id:adId});let left=Math.max(duration,Number(s.duration_seconds)||duration);button.textContent="দেখা হচ্ছে: "+left+" সেকেন্ড";const timer=setInterval(async()=>{left--;button.textContent="দেখা হচ্ছে: "+Math.max(0,left)+" সেকেন্ড";if(left<=0){clearInterval(timer);try{const done=await fn("ad-view",{action:"complete",session_id:s.session_id});button.textContent="যাচাই সম্পন্ন";msg("walletMsg",done.message||"ভিউ সার্ভারে জমা হয়েছে। ওয়ালেট রিফ্রেশ করুন।");await loadViewer()}catch(e){button.textContent="যাচাই হয়নি";msg("walletMsg",e.message,true)}button.disabled=false}},1000)}catch(e){button.disabled=false;button.textContent="আবার চেষ্টা করুন";msg("walletMsg",e.message,true)}}
-$("refreshAds").onclick=loadViewer;
+$("refreshAds").onclick=loadAds;
 const operatorNames={grameenphone:"গ্রামীণফোন (GP)",robi:"রবি (Robi)",banglalink:"বাংলালিংক",airtel:"এয়ারটেল",teletalk:"টেলিটক"};$("wMethod").onchange=()=>{const recharge=$("wMethod").value==="mobile_recharge";$("rechargeFields").classList.toggle("hidden",!recharge);$("wAccountLabel").textContent=recharge?"রিচার্জের মোবাইল নম্বর":"অ্যাকাউন্ট নম্বর";$("wAccount").placeholder=recharge?"01XXXXXXXXX":"মোবাইল/ব্যাংক অ্যাকাউন্ট"};$("withdrawBtn").onclick=async()=>{try{const amount=Number($("wAmount").value),method=$("wMethod").value,account=$("wAccount").value.trim(),operator=method==="mobile_recharge"?$("wOperator").value:null;if(!amount||amount<=0)throw Error("সঠিক পরিমাণ লিখুন");if(method==="mobile_recharge"&&!/^01[3-9][0-9]{8}$/.test(account))throw Error("সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর দিন");const {data,error}=await db.rpc("request_withdrawal",{p_user_id:user.id,p_amount:amount,p_method:method,p_account:account,p_mobile_operator:operator});if(error)throw error;msg("walletMsg",method==="mobile_recharge"?"মোবাইল রিচার্জের আবেদন জমা হয়েছে। অ্যাডমিন রিচার্জ করে নিশ্চিত করবেন। রেফারেন্স: "+data:"উত্তোলনের আবেদন জমা হয়েছে। রেফারেন্স: "+data);$("wAmount").value="";$("wAccount").value="";await loadViewer()}catch(e){msg("walletMsg",e.message,true)}};
 
 /* Restore an existing signed-in session after page refresh. */

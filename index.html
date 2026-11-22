@@ -121,7 +121,7 @@ async function loadViewer(){
    db.from("profiles").select("referral_code").eq("id",user.id).single(),
    db.rpc("get_my_referral_count"),
    db.from("wallet_accounts").select("available_balance_bdt,pending_balance_bdt").eq("user_id",user.id).maybeSingle(),
-   db.from("ads").select("id,title,media_url,text_content,cta_label,ad_type,placement,reward_enabled,destination_url,duration_seconds,campaign_id,campaigns!inner(title,reward_per_view_bdt,status,starts_at,ends_at)").eq("is_active",true).eq("campaigns.status","active").order("created_at",{ascending:false}),
+   db.from("ads").select("id,title,media_url,text_content,cta_label,ad_type,placement,reward_enabled,destination_url,duration_seconds,campaign_id,campaigns!inner(title,reward_per_view_bdt,status,starts_at,ends_at,companies!inner(verification_status))").eq("is_active",true).eq("campaigns.status","active").eq("campaigns.companies.verification_status","approved").order("created_at",{ascending:false}),
    db.from("wallet_transactions").select("transaction_type,amount_bdt,status,description,created_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(15)
   ]);
   $("publicUserId").textContent=pidR.data||"—";
@@ -137,7 +137,7 @@ async function loadViewer(){
    const media=isText?"":(video?'<video controls playsinline preload="none" src="'+safe(x.media_url)+'"></video>':'<img loading="lazy" decoding="async" src="'+safe(x.media_url)+'" alt="বিজ্ঞাপন">');
    const body=isText?'<p>'+safe(x.text_content||"")+'</p>':media+(x.text_content?'<p>'+safe(x.text_content)+'</p>':"");
    const reward=!!x.reward_enabled&&video;
-   const validLink=x.destination_url&&/^https?:\\/\\//i.test(x.destination_url);
+   const validLink=x.destination_url&&/^https?:\/\//i.test(x.destination_url);
    const link=validLink?'<a class="btn secondary" href="'+safe(x.destination_url)+'" target="_blank" rel="noopener noreferrer">'+safe(x.cta_label||"বিস্তারিত দেখুন")+'</a>':"";
    const action=t==="interstitial"?'<button class="btn" data-interstitial="1">ফুলস্ক্রিন বিজ্ঞাপন খুলুন</button>':(reward?'<button class="btn" data-watch="'+x.id+'" data-duration="'+x.duration_seconds+'">ভিডিও দেখুন ও রিওয়ার্ড নিন</button>':"");
    return '<article class="ad '+(t==="interstitial"?"interstitial-ad":"")+'"><span class="pill">'+safe(t.replaceAll("_"," "))+'</span><h3>'+safe(x.title)+'</h3><p class="muted">'+safe(x.campaigns?.title)+'</p>'+body+'<div class="actions">'+action+link+'</div>'+(reward?'<p class="hint">যাচাইকৃত ভিডিও সম্পন্ন হলে প্যাকেজ অনুযায়ী রিওয়ার্ড যোগ হবে।</p>':"")+'</article>';

@@ -166,7 +166,7 @@ async function loadViewer(){
   if(trial?.expires_at)msg("homePackageMsg","আপনার ৩০ দিনের ফ্রি ব্যবহার চালু আছে। শেষ হবে: "+new Date(trial.expires_at).toLocaleString("bn-BD"));else if(subs.some(x=>x.expires_at&&new Date(x.expires_at).getTime()<=now))msg("homePackageMsg","আপনার ফ্রি প্যাকেজের ৩০ দিন শেষ হয়েছে। আবার ব্যবহার করতে প্যাকেজ কিনুন।");
   const profile=profileR.data;if(profileR.error)throw profileR.error;const code=profile?.referral_code||"";$("myReferralCode").textContent=code;$("myReferralLink").value=URL+"/functions/v1/adview-portal?ref="+encodeURIComponent(code);if(refCountR.error)throw refCountR.error;$("referralCount").textContent=String(refCountR.data||0);
   $("available").textContent=money(walletR.data?.available_balance_bdt);$("pending").textContent=money(walletR.data?.pending_balance_bdt);
-}catch(e){$("ads").textContent="তথ্য লোড হয়নি: "+e.message}
+}catch(e){msg("walletMsg","অ্যাকাউন্টের কিছু তথ্য লোড হয়নি: "+e.message,true)}
  }
  async function loadMySupport(){
  try{

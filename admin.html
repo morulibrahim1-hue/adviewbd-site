@@ -92,7 +92,7 @@ async function openAdCreator(){
   if(!companyId){msg('adCreateMsg','কোনো অনুমোদিত বিজ্ঞাপনদাতা নেই বা নির্বাচন করা হয়নি। আপনার নিজস্ব বিজ্ঞাপনদাতা অনুমোদিত হতে হবে।',true);return}
   if(title.length<2||campaignTitle.length<2||!Number.isFinite(budget)||budget<0||!Number.isInteger(views)||views<0||!Number.isFinite(rewardAmount)||rewardAmount<0){msg('adCreateMsg','নাম, বাজেট, ভিউ ও রিওয়ার্ডের তথ্য সঠিকভাবে দিন।',true);return}
   if(!isReward||budget<=0||views<=0||rewardAmount<=0||rewardAmount*views>budget){msg('adCreateMsg','সব রিওয়ার্ড বিজ্ঞাপনের জন্য বাজেট, ভিউ সংখ্যা ও প্রতি ভিউ রিওয়ার্ড দিন; মোট রিওয়ার্ড বাজেটের বেশি হতে পারবে না।',true);return}
-  if(['video','rewarded_video','interstitial'].includes(t)&&(!Number.isInteger(duration)||duration<5||duration>600)){msg('adCreateMsg','সময় ৫ থেকে ৬০০ সেকেন্ডের মধ্যে দিন।',true);return}
+  if(!Number.isInteger(duration)||duration<5||duration>600){msg('adCreateMsg','সময় ৫ থেকে ৬০০ সেকেন্ডের মধ্যে দিন।',true);return}
   $('saveVideoAd').disabled=true;
   try{
    const {data:campaign,error:ce}=await supabase.from('campaigns').insert({company_id:companyId,title:campaignTitle,description:textContent||('Admin-created '+t+' advertisement'),status:'active',billing_model:'verified_completion',total_budget_bdt:budget,contracted_views:views,reward_per_view_bdt:rewardAmount}).select('id').single();if(ce)throw ce;
